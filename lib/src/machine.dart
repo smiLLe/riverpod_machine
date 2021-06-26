@@ -29,10 +29,11 @@ class StateNode<State, S extends State, Event> {
 
   final OnEnterState<State, S, Event> _cb;
 
-  NodeConfig<State, S, Event> enterState(StateMachine<State, Event> machine) {
-    final cfg = NodeConfig<State, S, Event>(machine);
+  NodeConfig<State, S, Event> getConfig(StateMachine<State, Event> machine) =>
+      NodeConfig<State, S, Event>(machine);
+
+  void enterState(NodeConfig<State, S, Event> cfg) {
     _cb(cfg);
-    return cfg;
   }
 
   bool isState(dynamic obj) => obj is S;
@@ -102,7 +103,11 @@ class NodeConfig<State, S extends State, Event> {
     assert(null != _machine,
         'Trying to transition to $state in $S which is no longer active');
     if (null != _machine) {
-      _machine!._transition(state);
+      final cur = _machine!._current;
+      _machine!._scheduler.schedule(() {
+        if (cur != _machine?._current) return;
+        _machine!._transition(state);
+      });
     }
   }
 }
@@ -152,12 +157,11 @@ class StateMachine<State, Event> {
   }
 
   void _transition(State state) {
-    _scheduler.schedule(() {
-      _cancelCurrent();
-      final node = _getNode(state);
-      _current = node.enterState(this);
-      _notifier.state = StateMachineStatus<State, Event>.running(state: state);
-    });
+    _cancelCurrent();
+    final node = _getNode(state);
+    _current = node.getConfig(this);
+    node.enterState(_current!);
+    _notifier.state = StateMachineStatus<State, Event>.running(state: state);
   }
 
   bool canSend(Event event) => _notifier.state.map(
@@ -201,8 +205,12 @@ class StateMachine<State, Event> {
             return true;
           }(), '');
         },
-        notStarted: (notStarted) => _transition(initialState),
-        stopped: (stopped) => _transition(initialState),
+        notStarted: (notStarted) => _scheduler.schedule(() {
+          _transition(initialState);
+        }),
+        stopped: (stopped) => _scheduler.schedule(() {
+          _transition(initialState);
+        }),
       );
 
   void stop() => _notifier.state.map(
