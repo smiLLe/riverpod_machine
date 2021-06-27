@@ -37,6 +37,17 @@ void main() {
     expect(machine, isA<StateMachine<State1, Event1>>());
   });
 
+  test('dispose machine', () {
+    final container = ProviderContainer();
+
+    expect(
+        () => container
+            .read(StateMachineProvider<State1, Event1>(
+                (ref) => const State1.foo()).machine)
+            .dispose(),
+        isNot(throwsException));
+  });
+
   group('.onExit()', () {
     test('callbacks executed when leaving state', () {
       final container = ProviderContainer();
