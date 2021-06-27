@@ -1,3 +1,4 @@
+import 'package:riverpod_machine/src/machine.dart';
 import 'package:test/test.dart';
 import 'package:riverpod_machine/riverpod_machine.dart';
 
