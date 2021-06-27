@@ -139,6 +139,7 @@ class StateMachine<State, Event> {
 
   NodeConfig<State, State, Event>? _current;
 
+  /// Disposing the [StateMachine] will also call [StateMachine.stop].
   void dispose() {
     stop();
     _notifier.dispose();
@@ -164,6 +165,9 @@ class StateMachine<State, Event> {
     node.enterState(_current!);
   }
 
+  /// Check whether it is possible to send an event to the [StateMachine].
+  /// This will return false if machine is not running or the current active state
+  /// has no event listener
   bool canSend(Event event) => _notifier.state.map(
         notStarted: (_) => false,
         stopped: (_) => false,
@@ -173,6 +177,8 @@ class StateMachine<State, Event> {
         },
       );
 
+  /// Send and event to the machine and trigger all event listeners that subscribe
+  /// to the given event in the current active state.
   void send(Event event) {
     _notifier.state.map(
       notStarted: (notStarted) {
@@ -189,6 +195,8 @@ class StateMachine<State, Event> {
     );
   }
 
+  /// Start the [StateMachine]. This will allow to send events.
+  /// It will also enter the initial state.
   void start() => _notifier.state.map(
         running: (running) {
           assert(false, 'Cannot start $_type because it is already running');
@@ -201,6 +209,8 @@ class StateMachine<State, Event> {
         }),
       );
 
+  /// Stop the [StateMachine]. It will no longer be possible to send events.
+  /// It will also exit the current state.
   void stop() => _notifier.state.map(
         notStarted: (_) {
           assert(false,

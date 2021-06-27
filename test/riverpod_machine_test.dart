@@ -272,6 +272,31 @@ void main() {
   });
 
   group('event', () {
+    test('can be checked if possible to be .send()', () {
+      final container = ProviderContainer();
+      final provider = StateMachineProvider<State1, Event1>((ref) {
+        ref.onState<_S1Foo>((cfg) {
+          cfg.onEvent<_E1Next>((event) {});
+        });
+        ref.onState<_S1Bar>((cfg) {});
+        ref.onState<_S1Baz>((cfg) {});
+        return const State1.foo();
+      });
+
+      expect(container.read(provider.machine).canSend(const Event1.next()),
+          isFalse);
+
+      container.read(provider.machine).start();
+      expect(container.read(provider.machine).canSend(const Event1.next()),
+          isTrue);
+      expect(container.read(provider.machine).canSend(const Event1.toBar()),
+          isFalse);
+
+      container.read(provider.machine).stop();
+      expect(container.read(provider.machine).canSend(const Event1.next()),
+          isFalse);
+    });
+
     test('cannot be .send() to machine while it is not started', () {
       final container = ProviderContainer();
       final provider = StateMachineProvider<State1, Event1>((ref) {
