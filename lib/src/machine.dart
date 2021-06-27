@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 
 part 'scheduler.dart';
 part 'provider.dart';
+part 'provider_auto_dispose.dart';
 
 part 'machine.freezed.dart';
 

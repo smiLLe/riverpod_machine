@@ -47,6 +47,11 @@ class StateMachineProvider<State, Event>
     extends AlwaysAliveProviderBase<StateMachineStatus<State, Event>> {
   StateMachineProvider(this._create, {String? name}) : super(name);
 
+  static const family = StateMachineProviderFamilyBuilder();
+  static const autoDispose = AutoDisposeStateMachineProviderBuilder();
+  static const autoDisposeFamily =
+      AutoDisposeStateMachineProviderFamilyBuilder();
+
   final Create<State, MachineProviderRef<State, Event>> _create;
 
   late final _StateMachineProvider<State, Event> machine =
@@ -83,5 +88,32 @@ class StateMachineProvider<State, Event>
     StateMachineStatus<State, Event> newState,
   ) {
     return true;
+  }
+}
+
+class StateMachineProviderFamily<State, Event, Arg> extends Family<
+    StateMachineStatus<State, Event>, Arg, StateMachineProvider<State, Event>> {
+  StateMachineProviderFamily(this._create, {String? name}) : super(name);
+
+  final FamilyCreate<State, MachineProviderRef<State, Event>, Arg> _create;
+
+  @override
+  StateMachineProvider<State, Event> create(Arg argument) {
+    return StateMachineProvider<State, Event>(
+      (ref) => _create(ref, argument),
+      name: name,
+    );
+  }
+}
+
+class StateMachineProviderFamilyBuilder {
+  const StateMachineProviderFamilyBuilder();
+
+  /// {@macro riverpod.family}
+  StateMachineProviderFamily<State, Event, Arg> call<State, Event, Arg>(
+    FamilyCreate<State, MachineProviderRef<State, Event>, Arg> create, {
+    String? name,
+  }) {
+    return StateMachineProviderFamily(create, name: name);
   }
 }

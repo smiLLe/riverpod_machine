@@ -21,6 +21,33 @@ void main() {
         isNot(throwsException));
   });
 
+  test('create family machine provider', () {
+    final container = ProviderContainer();
+    final mFam = StateMachineProvider.family<State1, Event1, State1>(
+        (ref, initial) => initial);
+    expect(
+        () => container.read(mFam(const State1.foo())), isNot(throwsException));
+    expect(container.read(mFam(const State1.foo()).machine).initialState,
+        const State1.foo());
+  });
+
+  test('create autoDispose machine provider', () {
+    final container = ProviderContainer();
+    final m = StateMachineProvider.autoDispose<State1, Event1>(
+        (ref) => const State1.foo());
+    expect(() => container.read(m), isNot(throwsException));
+  });
+
+  test('create autoDispose family machine provider', () {
+    final container = ProviderContainer();
+    final mFam = StateMachineProvider.autoDisposeFamily<State1, Event1, State1>(
+        (ref, initial) => initial);
+    expect(
+        () => container.read(mFam(const State1.foo())), isNot(throwsException));
+    expect(container.read(mFam(const State1.foo()).machine).initialState,
+        const State1.foo());
+  });
+
   test('read machine', () {
     final container = ProviderContainer();
 
@@ -42,9 +69,10 @@ void main() {
 
     expect(
         () => container
-            .read(StateMachineProvider<State1, Event1>(
-                (ref) => const State1.foo()).machine)
-            .dispose(),
+          ..read(
+              StateMachineProvider<State1, Event1>((ref) => const State1.foo())
+                  .machine)
+          ..dispose(),
         isNot(throwsException));
   });
 
