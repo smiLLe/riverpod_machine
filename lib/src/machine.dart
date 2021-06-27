@@ -160,8 +160,8 @@ class StateMachine<State, Event> {
     _cancelCurrent();
     final node = _getNode(state);
     _current = node.getConfig(this);
-    node.enterState(_current!);
     _notifier.state = StateMachineStatus<State, Event>.running(state: state);
+    node.enterState(_current!);
   }
 
   bool canSend(Event event) => _notifier.state.map(
@@ -176,18 +176,10 @@ class StateMachine<State, Event> {
   void send(Event event) {
     _notifier.state.map(
       notStarted: (notStarted) {
-        assert(() {
-          // ignore: avoid_print
-          print('Cannot send event to "$_type" while it is not running');
-          return true;
-        }(), '');
+        assert(false, 'Cannot send event to "$_type" while it is not running');
       },
       stopped: (stopped) {
-        assert(() {
-          // ignore: avoid_print
-          print('Cannot send event to "$_type" while it is stopped');
-          return true;
-        }(), '');
+        assert(false, 'Cannot send event to "$_type" while it is stopped');
       },
       running: (running) {
         final candidate = _current?._candidate(event);
@@ -199,11 +191,7 @@ class StateMachine<State, Event> {
 
   void start() => _notifier.state.map(
         running: (running) {
-          assert(() {
-            // ignore: avoid_print
-            print('Cannot start $_type because it is already running');
-            return true;
-          }(), '');
+          assert(false, 'Cannot start $_type because it is already running');
         },
         notStarted: (notStarted) => _scheduler.schedule(() {
           _transition(initialState);
@@ -215,19 +203,11 @@ class StateMachine<State, Event> {
 
   void stop() => _notifier.state.map(
         notStarted: (_) {
-          assert(() {
-            // ignore: avoid_print
-            print(
-                '$_type cannot be stopped because it has not been started, yet');
-            return true;
-          }(), '');
+          assert(false,
+              '$_type cannot be stopped because it has not been started, yet');
         },
         stopped: (stopped) {
-          assert(() {
-            // ignore: avoid_print
-            print('$_type cannot be stopped because it is stopped');
-            return true;
-          }(), '');
+          assert(false, '$_type cannot be stopped because it is stopped');
         },
         running: (running) {
           _cancelCurrent();
