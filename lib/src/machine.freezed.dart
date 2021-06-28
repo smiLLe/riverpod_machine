@@ -16,27 +16,27 @@ final _privateConstructorUsedError = UnsupportedError(
 class _$StateMachineStatusTearOff {
   const _$StateMachineStatusTearOff();
 
-  _NotStarted<State, Event> notStarted<State, Event>(
+  MachineNotStarted<State, Event> notStarted<State, Event>(
       {required void Function() start}) {
-    return _NotStarted<State, Event>(
+    return MachineNotStarted<State, Event>(
       start: start,
     );
   }
 
-  _Stopped<State, Event> stopped<State, Event>(
+  MachineStopped<State, Event> stopped<State, Event>(
       {required State lastState, required void Function() start}) {
-    return _Stopped<State, Event>(
+    return MachineStopped<State, Event>(
       lastState: lastState,
       start: start,
     );
   }
 
-  _Running<State, Event> running<State, Event>(
+  MachineRunning<State, Event> running<State, Event>(
       {required State state,
       required void Function(Event) send,
       required bool Function(Event) canSend,
       required void Function() stop}) {
-    return _Running<State, Event>(
+    return MachineRunning<State, Event>(
       state: state,
       send: send,
       canSend: canSend,
@@ -71,16 +71,16 @@ mixin _$StateMachineStatus<State, Event> {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(_NotStarted<State, Event> value) notStarted,
-    required TResult Function(_Stopped<State, Event> value) stopped,
-    required TResult Function(_Running<State, Event> value) running,
+    required TResult Function(MachineNotStarted<State, Event> value) notStarted,
+    required TResult Function(MachineStopped<State, Event> value) stopped,
+    required TResult Function(MachineRunning<State, Event> value) running,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
-    TResult Function(_NotStarted<State, Event> value)? notStarted,
-    TResult Function(_Stopped<State, Event> value)? stopped,
-    TResult Function(_Running<State, Event> value)? running,
+    TResult Function(MachineNotStarted<State, Event> value)? notStarted,
+    TResult Function(MachineStopped<State, Event> value)? stopped,
+    TResult Function(MachineRunning<State, Event> value)? running,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -104,30 +104,30 @@ class _$StateMachineStatusCopyWithImpl<State, Event, $Res>
 }
 
 /// @nodoc
-abstract class _$NotStartedCopyWith<State, Event, $Res> {
-  factory _$NotStartedCopyWith(_NotStarted<State, Event> value,
-          $Res Function(_NotStarted<State, Event>) then) =
-      __$NotStartedCopyWithImpl<State, Event, $Res>;
+abstract class $MachineNotStartedCopyWith<State, Event, $Res> {
+  factory $MachineNotStartedCopyWith(MachineNotStarted<State, Event> value,
+          $Res Function(MachineNotStarted<State, Event>) then) =
+      _$MachineNotStartedCopyWithImpl<State, Event, $Res>;
   $Res call({void Function() start});
 }
 
 /// @nodoc
-class __$NotStartedCopyWithImpl<State, Event, $Res>
+class _$MachineNotStartedCopyWithImpl<State, Event, $Res>
     extends _$StateMachineStatusCopyWithImpl<State, Event, $Res>
-    implements _$NotStartedCopyWith<State, Event, $Res> {
-  __$NotStartedCopyWithImpl(_NotStarted<State, Event> _value,
-      $Res Function(_NotStarted<State, Event>) _then)
-      : super(_value, (v) => _then(v as _NotStarted<State, Event>));
+    implements $MachineNotStartedCopyWith<State, Event, $Res> {
+  _$MachineNotStartedCopyWithImpl(MachineNotStarted<State, Event> _value,
+      $Res Function(MachineNotStarted<State, Event>) _then)
+      : super(_value, (v) => _then(v as MachineNotStarted<State, Event>));
 
   @override
-  _NotStarted<State, Event> get _value =>
-      super._value as _NotStarted<State, Event>;
+  MachineNotStarted<State, Event> get _value =>
+      super._value as MachineNotStarted<State, Event>;
 
   @override
   $Res call({
     Object? start = freezed,
   }) {
-    return _then(_NotStarted<State, Event>(
+    return _then(MachineNotStarted<State, Event>(
       start: start == freezed
           ? _value.start
           : start // ignore: cast_nullable_to_non_nullable
@@ -138,8 +138,9 @@ class __$NotStartedCopyWithImpl<State, Event, $Res>
 
 /// @nodoc
 
-class _$_NotStarted<State, Event> implements _NotStarted<State, Event> {
-  _$_NotStarted({required this.start});
+class _$MachineNotStarted<State, Event>
+    implements MachineNotStarted<State, Event> {
+  _$MachineNotStarted({required this.start});
 
   @override
   final void Function() start;
@@ -152,7 +153,7 @@ class _$_NotStarted<State, Event> implements _NotStarted<State, Event> {
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
-        (other is _NotStarted<State, Event> &&
+        (other is MachineNotStarted<State, Event> &&
             (identical(other.start, start) ||
                 const DeepCollectionEquality().equals(other.start, start)));
   }
@@ -163,9 +164,9 @@ class _$_NotStarted<State, Event> implements _NotStarted<State, Event> {
 
   @JsonKey(ignore: true)
   @override
-  _$NotStartedCopyWith<State, Event, _NotStarted<State, Event>> get copyWith =>
-      __$NotStartedCopyWithImpl<State, Event, _NotStarted<State, Event>>(
-          this, _$identity);
+  $MachineNotStartedCopyWith<State, Event, MachineNotStarted<State, Event>>
+      get copyWith => _$MachineNotStartedCopyWithImpl<State, Event,
+          MachineNotStarted<State, Event>>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -198,9 +199,9 @@ class _$_NotStarted<State, Event> implements _NotStarted<State, Event> {
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(_NotStarted<State, Event> value) notStarted,
-    required TResult Function(_Stopped<State, Event> value) stopped,
-    required TResult Function(_Running<State, Event> value) running,
+    required TResult Function(MachineNotStarted<State, Event> value) notStarted,
+    required TResult Function(MachineStopped<State, Event> value) stopped,
+    required TResult Function(MachineRunning<State, Event> value) running,
   }) {
     return notStarted(this);
   }
@@ -208,9 +209,9 @@ class _$_NotStarted<State, Event> implements _NotStarted<State, Event> {
   @override
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
-    TResult Function(_NotStarted<State, Event> value)? notStarted,
-    TResult Function(_Stopped<State, Event> value)? stopped,
-    TResult Function(_Running<State, Event> value)? running,
+    TResult Function(MachineNotStarted<State, Event> value)? notStarted,
+    TResult Function(MachineStopped<State, Event> value)? stopped,
+    TResult Function(MachineRunning<State, Event> value)? running,
     required TResult orElse(),
   }) {
     if (notStarted != null) {
@@ -220,42 +221,43 @@ class _$_NotStarted<State, Event> implements _NotStarted<State, Event> {
   }
 }
 
-abstract class _NotStarted<State, Event>
+abstract class MachineNotStarted<State, Event>
     implements StateMachineStatus<State, Event> {
-  factory _NotStarted({required void Function() start}) =
-      _$_NotStarted<State, Event>;
+  factory MachineNotStarted({required void Function() start}) =
+      _$MachineNotStarted<State, Event>;
 
   void Function() get start => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  _$NotStartedCopyWith<State, Event, _NotStarted<State, Event>> get copyWith =>
-      throw _privateConstructorUsedError;
+  $MachineNotStartedCopyWith<State, Event, MachineNotStarted<State, Event>>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$StoppedCopyWith<State, Event, $Res> {
-  factory _$StoppedCopyWith(_Stopped<State, Event> value,
-          $Res Function(_Stopped<State, Event>) then) =
-      __$StoppedCopyWithImpl<State, Event, $Res>;
+abstract class $MachineStoppedCopyWith<State, Event, $Res> {
+  factory $MachineStoppedCopyWith(MachineStopped<State, Event> value,
+          $Res Function(MachineStopped<State, Event>) then) =
+      _$MachineStoppedCopyWithImpl<State, Event, $Res>;
   $Res call({State lastState, void Function() start});
 }
 
 /// @nodoc
-class __$StoppedCopyWithImpl<State, Event, $Res>
+class _$MachineStoppedCopyWithImpl<State, Event, $Res>
     extends _$StateMachineStatusCopyWithImpl<State, Event, $Res>
-    implements _$StoppedCopyWith<State, Event, $Res> {
-  __$StoppedCopyWithImpl(_Stopped<State, Event> _value,
-      $Res Function(_Stopped<State, Event>) _then)
-      : super(_value, (v) => _then(v as _Stopped<State, Event>));
+    implements $MachineStoppedCopyWith<State, Event, $Res> {
+  _$MachineStoppedCopyWithImpl(MachineStopped<State, Event> _value,
+      $Res Function(MachineStopped<State, Event>) _then)
+      : super(_value, (v) => _then(v as MachineStopped<State, Event>));
 
   @override
-  _Stopped<State, Event> get _value => super._value as _Stopped<State, Event>;
+  MachineStopped<State, Event> get _value =>
+      super._value as MachineStopped<State, Event>;
 
   @override
   $Res call({
     Object? lastState = freezed,
     Object? start = freezed,
   }) {
-    return _then(_Stopped<State, Event>(
+    return _then(MachineStopped<State, Event>(
       lastState: lastState == freezed
           ? _value.lastState
           : lastState // ignore: cast_nullable_to_non_nullable
@@ -270,8 +272,8 @@ class __$StoppedCopyWithImpl<State, Event, $Res>
 
 /// @nodoc
 
-class _$_Stopped<State, Event> implements _Stopped<State, Event> {
-  _$_Stopped({required this.lastState, required this.start});
+class _$MachineStopped<State, Event> implements MachineStopped<State, Event> {
+  _$MachineStopped({required this.lastState, required this.start});
 
   @override
   final State lastState;
@@ -286,7 +288,7 @@ class _$_Stopped<State, Event> implements _Stopped<State, Event> {
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
-        (other is _Stopped<State, Event> &&
+        (other is MachineStopped<State, Event> &&
             (identical(other.lastState, lastState) ||
                 const DeepCollectionEquality()
                     .equals(other.lastState, lastState)) &&
@@ -302,9 +304,9 @@ class _$_Stopped<State, Event> implements _Stopped<State, Event> {
 
   @JsonKey(ignore: true)
   @override
-  _$StoppedCopyWith<State, Event, _Stopped<State, Event>> get copyWith =>
-      __$StoppedCopyWithImpl<State, Event, _Stopped<State, Event>>(
-          this, _$identity);
+  $MachineStoppedCopyWith<State, Event, MachineStopped<State, Event>>
+      get copyWith => _$MachineStoppedCopyWithImpl<State, Event,
+          MachineStopped<State, Event>>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -337,9 +339,9 @@ class _$_Stopped<State, Event> implements _Stopped<State, Event> {
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(_NotStarted<State, Event> value) notStarted,
-    required TResult Function(_Stopped<State, Event> value) stopped,
-    required TResult Function(_Running<State, Event> value) running,
+    required TResult Function(MachineNotStarted<State, Event> value) notStarted,
+    required TResult Function(MachineStopped<State, Event> value) stopped,
+    required TResult Function(MachineRunning<State, Event> value) running,
   }) {
     return stopped(this);
   }
@@ -347,9 +349,9 @@ class _$_Stopped<State, Event> implements _Stopped<State, Event> {
   @override
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
-    TResult Function(_NotStarted<State, Event> value)? notStarted,
-    TResult Function(_Stopped<State, Event> value)? stopped,
-    TResult Function(_Running<State, Event> value)? running,
+    TResult Function(MachineNotStarted<State, Event> value)? notStarted,
+    TResult Function(MachineStopped<State, Event> value)? stopped,
+    TResult Function(MachineRunning<State, Event> value)? running,
     required TResult orElse(),
   }) {
     if (stopped != null) {
@@ -359,23 +361,24 @@ class _$_Stopped<State, Event> implements _Stopped<State, Event> {
   }
 }
 
-abstract class _Stopped<State, Event>
+abstract class MachineStopped<State, Event>
     implements StateMachineStatus<State, Event> {
-  factory _Stopped({required State lastState, required void Function() start}) =
-      _$_Stopped<State, Event>;
+  factory MachineStopped(
+      {required State lastState,
+      required void Function() start}) = _$MachineStopped<State, Event>;
 
   State get lastState => throw _privateConstructorUsedError;
   void Function() get start => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  _$StoppedCopyWith<State, Event, _Stopped<State, Event>> get copyWith =>
-      throw _privateConstructorUsedError;
+  $MachineStoppedCopyWith<State, Event, MachineStopped<State, Event>>
+      get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class _$RunningCopyWith<State, Event, $Res> {
-  factory _$RunningCopyWith(_Running<State, Event> value,
-          $Res Function(_Running<State, Event>) then) =
-      __$RunningCopyWithImpl<State, Event, $Res>;
+abstract class $MachineRunningCopyWith<State, Event, $Res> {
+  factory $MachineRunningCopyWith(MachineRunning<State, Event> value,
+          $Res Function(MachineRunning<State, Event>) then) =
+      _$MachineRunningCopyWithImpl<State, Event, $Res>;
   $Res call(
       {State state,
       void Function(Event) send,
@@ -384,15 +387,16 @@ abstract class _$RunningCopyWith<State, Event, $Res> {
 }
 
 /// @nodoc
-class __$RunningCopyWithImpl<State, Event, $Res>
+class _$MachineRunningCopyWithImpl<State, Event, $Res>
     extends _$StateMachineStatusCopyWithImpl<State, Event, $Res>
-    implements _$RunningCopyWith<State, Event, $Res> {
-  __$RunningCopyWithImpl(_Running<State, Event> _value,
-      $Res Function(_Running<State, Event>) _then)
-      : super(_value, (v) => _then(v as _Running<State, Event>));
+    implements $MachineRunningCopyWith<State, Event, $Res> {
+  _$MachineRunningCopyWithImpl(MachineRunning<State, Event> _value,
+      $Res Function(MachineRunning<State, Event>) _then)
+      : super(_value, (v) => _then(v as MachineRunning<State, Event>));
 
   @override
-  _Running<State, Event> get _value => super._value as _Running<State, Event>;
+  MachineRunning<State, Event> get _value =>
+      super._value as MachineRunning<State, Event>;
 
   @override
   $Res call({
@@ -401,7 +405,7 @@ class __$RunningCopyWithImpl<State, Event, $Res>
     Object? canSend = freezed,
     Object? stop = freezed,
   }) {
-    return _then(_Running<State, Event>(
+    return _then(MachineRunning<State, Event>(
       state: state == freezed
           ? _value.state
           : state // ignore: cast_nullable_to_non_nullable
@@ -424,8 +428,8 @@ class __$RunningCopyWithImpl<State, Event, $Res>
 
 /// @nodoc
 
-class _$_Running<State, Event> implements _Running<State, Event> {
-  _$_Running(
+class _$MachineRunning<State, Event> implements MachineRunning<State, Event> {
+  _$MachineRunning(
       {required this.state,
       required this.send,
       required this.canSend,
@@ -448,7 +452,7 @@ class _$_Running<State, Event> implements _Running<State, Event> {
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
-        (other is _Running<State, Event> &&
+        (other is MachineRunning<State, Event> &&
             (identical(other.state, state) ||
                 const DeepCollectionEquality().equals(other.state, state)) &&
             (identical(other.send, send) ||
@@ -470,9 +474,9 @@ class _$_Running<State, Event> implements _Running<State, Event> {
 
   @JsonKey(ignore: true)
   @override
-  _$RunningCopyWith<State, Event, _Running<State, Event>> get copyWith =>
-      __$RunningCopyWithImpl<State, Event, _Running<State, Event>>(
-          this, _$identity);
+  $MachineRunningCopyWith<State, Event, MachineRunning<State, Event>>
+      get copyWith => _$MachineRunningCopyWithImpl<State, Event,
+          MachineRunning<State, Event>>(this, _$identity);
 
   @override
   @optionalTypeArgs
@@ -505,9 +509,9 @@ class _$_Running<State, Event> implements _Running<State, Event> {
   @override
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
-    required TResult Function(_NotStarted<State, Event> value) notStarted,
-    required TResult Function(_Stopped<State, Event> value) stopped,
-    required TResult Function(_Running<State, Event> value) running,
+    required TResult Function(MachineNotStarted<State, Event> value) notStarted,
+    required TResult Function(MachineStopped<State, Event> value) stopped,
+    required TResult Function(MachineRunning<State, Event> value) running,
   }) {
     return running(this);
   }
@@ -515,9 +519,9 @@ class _$_Running<State, Event> implements _Running<State, Event> {
   @override
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
-    TResult Function(_NotStarted<State, Event> value)? notStarted,
-    TResult Function(_Stopped<State, Event> value)? stopped,
-    TResult Function(_Running<State, Event> value)? running,
+    TResult Function(MachineNotStarted<State, Event> value)? notStarted,
+    TResult Function(MachineStopped<State, Event> value)? stopped,
+    TResult Function(MachineRunning<State, Event> value)? running,
     required TResult orElse(),
   }) {
     if (running != null) {
@@ -527,19 +531,19 @@ class _$_Running<State, Event> implements _Running<State, Event> {
   }
 }
 
-abstract class _Running<State, Event>
+abstract class MachineRunning<State, Event>
     implements StateMachineStatus<State, Event> {
-  factory _Running(
+  factory MachineRunning(
       {required State state,
       required void Function(Event) send,
       required bool Function(Event) canSend,
-      required void Function() stop}) = _$_Running<State, Event>;
+      required void Function() stop}) = _$MachineRunning<State, Event>;
 
   State get state => throw _privateConstructorUsedError;
   void Function(Event) get send => throw _privateConstructorUsedError;
   bool Function(Event) get canSend => throw _privateConstructorUsedError;
   void Function() get stop => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  _$RunningCopyWith<State, Event, _Running<State, Event>> get copyWith =>
-      throw _privateConstructorUsedError;
+  $MachineRunningCopyWith<State, Event, MachineRunning<State, Event>>
+      get copyWith => throw _privateConstructorUsedError;
 }

@@ -22,59 +22,69 @@ void main() {
         isNot(throwsException));
   });
 
-  test('create family machine provider', () {
-    final container = ProviderContainer();
-    final mFam = StateMachineProvider.family<State1, Event1, State1>(
-        (ref, initial) => initial);
-    expect(
-        () => container.read(mFam(const State1.foo())), isNot(throwsException));
-    expect(container.read(mFam(const State1.foo()).machine).initialState,
-        const State1.foo());
-  });
+  // test('create family machine provider', () {
+  //   final container = ProviderContainer();
+  //   final mFam = StateMachineProvider.family<State1, Event1, State1>(
+  //       (ref, initial) => initial);
+  //   expect(
+  //       () => container.read(mFam(const State1.foo())), isNot(throwsException));
+  //   expect(container.read(mFam(const State1.foo()).machine).initialState,
+  //       const State1.foo());
+  // });
 
-  test('create autoDispose machine provider', () {
-    final container = ProviderContainer();
-    final m = StateMachineProvider.autoDispose<State1, Event1>(
-        (ref) => const State1.foo());
-    expect(() => container.read(m), isNot(throwsException));
-  });
+  // test('create autoDispose machine provider', () {
+  //   final container = ProviderContainer();
+  //   final m = StateMachineProvider.autoDispose<State1, Event1>(
+  //       (ref) => const State1.foo());
+  //   expect(() => container.read(m), isNot(throwsException));
+  // });
 
-  test('create autoDispose family machine provider', () {
-    final container = ProviderContainer();
-    final mFam = StateMachineProvider.autoDisposeFamily<State1, Event1, State1>(
-        (ref, initial) => initial);
-    expect(
-        () => container.read(mFam(const State1.foo())), isNot(throwsException));
-    expect(container.read(mFam(const State1.foo()).machine).initialState,
-        const State1.foo());
-  });
+  // test('create autoDispose family machine provider', () {
+  //   final container = ProviderContainer();
+  //   final mFam = StateMachineProvider.autoDisposeFamily<State1, Event1, State1>(
+  //       (ref, initial) => initial);
+  //   expect(
+  //       () => container.read(mFam(const State1.foo())), isNot(throwsException));
+  //   expect(container.read(mFam(const State1.foo()).machine).initialState,
+  //       const State1.foo());
+  // });
 
-  test('read machine', () {
-    final container = ProviderContainer();
+  // test('read machine', () {
+  //   final container = ProviderContainer();
 
-    expect(
-        () => container.read(
-            StateMachineProvider<State1, Event1>((ref) => const State1.foo())
-                .machine),
-        isNot(throwsException));
+  //   expect(
+  //       () => container.read(
+  //           StateMachineProvider<State1, Event1>((ref) => const State1.foo())
+  //               .machine),
+  //       isNot(throwsException));
 
-    final machine = container.read(
-        StateMachineProvider<State1, Event1>((ref) => const State1.foo())
-            .machine);
+  //   final machine = container.read(
+  //       StateMachineProvider<State1, Event1>((ref) => const State1.foo())
+  //           .machine);
 
-    expect(machine, isA<StateMachine<State1, Event1>>());
-  });
+  //   expect(machine, isA<StateMachine<State1, Event1>>());
+  // });
 
   test('dispose machine', () {
-    final container = ProviderContainer();
+    var container = ProviderContainer();
+    final provider = StateMachineProvider<State1, Event1>((ref) {
+      ref.onState<_S1Foo>((cfg) {});
+      return const State1.foo();
+    });
 
-    expect(
-        () => container
-          ..read(
-              StateMachineProvider<State1, Event1>((ref) => const State1.foo())
-                  .machine)
-          ..dispose(),
-        isNot(throwsException));
+    var element = container.readProviderElement(provider);
+    expect(element, isA<MachineProviderElement<State1, Event1>>());
+    container.dispose();
+    element = element as MachineProviderElement<State1, Event1>;
+    expect(element.state, isA<MachineNotStarted<State1, Event1>>());
+
+    container = ProviderContainer();
+    element = container.readProviderElement(provider)
+        as MachineProviderElement<State1, Event1>;
+    container.read(provider).maybeMap(
+        orElse: () {}, notStarted: (notStarted) => notStarted.start());
+    container.dispose();
+    expect(element.state, isA<MachineStopped<State1, Event1>>());
   });
 
   group('.onExit()', () {
@@ -95,9 +105,13 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine)
-        ..start()
-        ..send(const Event1.next());
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+      container.read(provider).maybeMap(
+          orElse: () {}, running: (obj) => obj.send(const Event1.next()));
+      // ..start()
+      // ..send(const Event1.next());
 
       verify(onExitCbA()).called(1);
       verify(onExitCbB()).called(1);
@@ -123,9 +137,11 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine)
-        ..start()
-        ..send(const Event1.next());
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+      container.read(provider).maybeMap(
+          orElse: () {}, running: (obj) => obj.send(const Event1.next()));
 
       await c.future;
 
@@ -145,21 +161,35 @@ void main() {
         return const State1.foo();
       });
     });
+
     test('cannot start machine when it is already running', () {
-      container.read(provider.machine).start();
+      dynamic start;
+      container.read(provider).maybeMap(
+          orElse: () {},
+          notStarted: (notStarted) {
+            start = notStarted.start;
+            notStarted.start();
+          });
 
-      expect(() => container.read(provider.machine).start(),
-          throwsA(isA<AssertionError>()));
-    });
-
-    test('cannot stop machine when it is not started', () {
-      expect(() => container.read(provider.machine)._stop(),
-          throwsA(isA<AssertionError>()));
+      expect(() => start(), throwsA(isA<AssertionError>()));
     });
 
     test('cannot stop machine when it is stopped', () {
-      expect(() => container.read(provider.machine)._stop(),
-          throwsA(isA<AssertionError>()));
+      dynamic stop;
+      container.read(provider).maybeMap(
+            orElse: () {},
+            notStarted: (notStarted) {
+              notStarted.start();
+            },
+          );
+      container.read(provider).maybeMap(
+          orElse: () {},
+          running: (running) {
+            stop = running.stop;
+            running.stop();
+          });
+
+      expect(() => stop(), throwsA(isA<AssertionError>()));
     });
   });
 
@@ -169,7 +199,7 @@ void main() {
       expect(
           container.read(StateMachineProvider<State1, Event1>(
               (ref) => const State1.foo())),
-          StateMachineStatus<State1, Event1>.notStarted());
+          isA<MachineNotStarted<State1, Event1>>());
     });
 
     test('will become .running when machine started', () {
@@ -179,12 +209,11 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine).start();
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
 
-      expect(
-          container.read(provider),
-          StateMachineStatus<State1, Event1>.running(
-              state: const State1.foo()));
+      expect(container.read(provider), isA<MachineRunning<State1, Event1>>());
     });
 
     test('can become .stopped', () {
@@ -194,14 +223,14 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine)
-        ..start()
-        .._stop();
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, running: (obj) => obj.stop());
 
-      expect(
-          container.read(provider),
-          StateMachineStatus<State1, Event1>.stopped(
-              lastState: const State1.foo()));
+      expect(container.read(provider), isA<MachineStopped<State1, Event1>>());
     });
   });
 
@@ -219,12 +248,14 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine).start();
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
 
       expect(
           container.read(provider),
-          StateMachineStatus<State1, Event1>.running(
-              state: const State1.baz()));
+          isA<MachineRunning<State1, Event1>>()
+              .having((s) => s.state, 'state', equals(const State1.baz())));
     });
 
     test('async from one state to another', () async {
@@ -242,13 +273,15 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine).start();
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
 
       await completer.future;
       expect(
           container.read(provider),
-          StateMachineStatus<State1, Event1>.running(
-              state: const State1.bar()));
+          isA<MachineRunning<State1, Event1>>()
+              .having((s) => s.state, 'state', equals(const State1.bar())));
     });
 
     test('is no longer possible if state has been left before', () async {
@@ -270,7 +303,9 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine).start();
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
 
       expectLater(completer.future, throwsA(isA<AssertionError>()));
 
@@ -279,8 +314,8 @@ void main() {
       } catch (_) {}
       expect(
           container.read(provider),
-          StateMachineStatus<State1, Event1>.running(
-              state: const State1.bar()));
+          isA<MachineRunning<State1, Event1>>()
+              .having((s) => s.state, 'state', equals(const State1.bar())));
     });
 
     test('can be checked', () async {
@@ -302,7 +337,9 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine).start();
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
 
       await completer.future;
 
@@ -322,36 +359,29 @@ void main() {
         ref.onState<_S1Baz>((cfg) {});
         return const State1.foo();
       });
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
 
-      expect(container.read(provider.machine).canSend(const Event1.next()),
-          isFalse);
+      dynamic canSend;
+      container.read(provider).maybeMap(
+          orElse: () => false,
+          running: (obj) {
+            canSend = obj.canSend;
+          });
 
-      container.read(provider.machine).start();
-      expect(container.read(provider.machine).canSend(const Event1.next()),
-          isTrue);
-      expect(container.read(provider.machine).canSend(const Event1.toBar()),
-          isFalse);
+      expect(canSend(const Event1.next()), isTrue);
+      expect(canSend(const Event1.toBar()), isFalse);
 
-      container.read(provider.machine)._stop();
-      expect(container.read(provider.machine).canSend(const Event1.next()),
-          isFalse);
-    });
+      container
+          .read(provider)
+          .maybeMap(orElse: () => false, running: (obj) => obj.stop());
 
-    test('cannot be .send() to machine while it is not started', () {
-      final container = ProviderContainer();
-      final provider = StateMachineProvider<State1, Event1>((ref) {
-        ref.onState<_S1Foo>((cfg) {
-          cfg.transition(const State1.bar());
-        });
-        ref.onState<_S1Bar>((cfg) {
-          cfg.transition(const State1.baz());
-        });
-        ref.onState<_S1Baz>((cfg) {});
-        return const State1.foo();
-      });
+      expect(canSend(const Event1.next()), isFalse);
 
-      expect(() => container.read(provider.machine).send(const Event1.next()),
-          throwsA(isA<AssertionError>()));
+      container.dispose();
+      expect(canSend(const Event1.next()), isFalse);
+      expect(canSend(const Event1.toBar()), isFalse);
     });
 
     test('cannot be .send() to machine while it is stopped', () {
@@ -367,12 +397,18 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine)
-        ..start()
-        .._stop();
+      dynamic send;
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+      container.read(provider).maybeMap(
+          orElse: () {},
+          running: (obj) {
+            send = obj.send;
+            obj.stop();
+          });
 
-      expect(() => container.read(provider.machine).send(const Event1.next()),
-          throwsA(isA<AssertionError>()));
+      expect(() => send(const Event1.next()), throwsA(isA<AssertionError>()));
     });
 
     test('can be listened for, in specific state while machine is running', () {
@@ -390,10 +426,13 @@ void main() {
         return const State1.foo();
       });
 
-      container.read(provider.machine)
-        ..start()
-        ..send(const Event1.next())
-        ..send(const Event1.toBar());
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+      container.read(provider).maybeMap(
+          orElse: () {},
+          running: (obj) =>
+              obj..send(const Event1.next())..send(const Event1.toBar()));
 
       verify(listenerNext(const Event1.next())).called(1);
       verify(listenerToBar(const Event1.toBar())).called(1);
@@ -401,10 +440,12 @@ void main() {
       verifyNoMoreInteractions(listenerNext);
       verifyNoMoreInteractions(listenerToBar);
 
-      container.read(provider.machine)
-        ..send(const Event1.toBaz())
-        ..send(const Event1.next())
-        ..send(const Event1.toBar());
+      container.read(provider).maybeMap(
+          orElse: () {},
+          running: (obj) => obj
+            ..send(const Event1.toBaz())
+            ..send(const Event1.next())
+            ..send(const Event1.toBar()));
     });
   });
 }

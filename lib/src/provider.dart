@@ -26,7 +26,17 @@ class MachineProviderElement<State, Event>
 
   @override
   void dispose() {
-    _stop();
+    _cancelCurrent();
+    state.maybeMap(
+      orElse: () {},
+      running: (running) {
+        state = StateMachineStatus<State, Event>.stopped(
+          lastState: running.state,
+          start: _start,
+        );
+      },
+    );
+
     _scheduler.dispose();
     _states.clear();
     super.dispose();
@@ -160,10 +170,16 @@ class StateMachineProvider<State, Event>
   }
 
   @override
-  SetupOverride get setupOverride => (setup) {
+  void Function(
+    void Function({
+      required ProviderBase origin,
+      required ProviderBase override,
+    })
+        setup,
+  ) get setupOverride => (setup) {
         setup(origin: this, override: this);
         // setup(origin: future, override: future);
-        setup(origin: Object(), override: Object());
+        // setup(origin: Object(), override: Object());
       };
 }
 
