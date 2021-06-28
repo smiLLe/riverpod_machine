@@ -9,12 +9,116 @@ abstract class MachineProviderRef<State, Event> implements ProviderRefBase {
 }
 
 class MachineProviderElement<State, Event>
-    extends ProviderElementBase<StateMachine<State, Event>>
+    extends ProviderElementBase<StateMachineStatus<State, Event>>
     implements MachineProviderRef<State, Event> {
-  MachineProviderElement(ProviderBase<StateMachine<State, Event>> provider)
+  MachineProviderElement(
+      ProviderBase<StateMachineStatus<State, Event>> provider)
       : super(provider);
 
+  late final State initialState;
+  StateMachineStatus<State, Event> get initialStatus =>
+      StateMachineStatus<State, Event>.notStarted(start: _start);
+
   final List<StateNode<State, State, Event>> _states = [];
+  final Scheduler _scheduler = Scheduler()..initialize();
+  NodeConfig<State, State, Event>? _current;
+  String get _type => provider.toString();
+
+  @override
+  void dispose() {
+    _stop();
+    _scheduler.dispose();
+    _states.clear();
+    super.dispose();
+  }
+
+  StateNode<State, State, Event> _getNode(State state) {
+    return _states.firstWhere(
+      (node) => node.isState(state),
+      orElse: () => throw Exception('State "$state" not found in "$_type" '),
+    );
+  }
+
+  void _cancelCurrent() {
+    _current?.dispose();
+    _current = null;
+  }
+
+  void _transition(State state) {
+    _cancelCurrent();
+    final node = _getNode(state);
+    _current = node.getConfig(this);
+    this.state = StateMachineStatus<State, Event>.running(
+      state: state,
+      send: _send,
+      canSend: _canSend,
+      stop: _stop,
+    );
+    node.enterState(_current!);
+  }
+
+  /// Check whether it is possible to send an event to the [StateMachine].
+  /// This will return false if machine is not running or the current active state
+  /// has no event listener
+  bool _canSend(Event event) => state.map(
+        notStarted: (_) => false,
+        stopped: (_) => false,
+        running: (running) {
+          final candidate = _current?._candidate(event);
+          return null != candidate;
+        },
+      );
+
+  /// Send and event to the machine and trigger all event listeners that subscribe
+  /// to the given event in the current active state.
+  void _send(Event event) {
+    state.map(
+      notStarted: (notStarted) {
+        assert(false, 'Cannot send event to "$_type" while it is not running');
+      },
+      stopped: (stopped) {
+        assert(false, 'Cannot send event to "$_type" while it is stopped');
+      },
+      running: (running) {
+        final candidate = _current?._candidate(event);
+        if (null == candidate) return;
+        candidate._cb(event);
+      },
+    );
+  }
+
+  /// Start the [StateMachine]. This will allow to send events.
+  /// It will also enter the initial state.
+  void _start() => state.map(
+        running: (running) {
+          assert(false, 'Cannot start $_type because it is already running');
+        },
+        notStarted: (notStarted) => _scheduler.schedule(() {
+          _transition(initialState);
+        }),
+        stopped: (stopped) => _scheduler.schedule(() {
+          _transition(initialState);
+        }),
+      );
+
+  /// Stop the [StateMachine]. It will no longer be possible to send events.
+  /// It will also exit the current state.
+  void _stop() => state.map(
+        notStarted: (_) {
+          assert(false,
+              '$_type cannot be stopped because it has not been started, yet');
+        },
+        stopped: (stopped) {
+          assert(false, '$_type cannot be stopped because it is stopped');
+        },
+        running: (running) {
+          _cancelCurrent();
+          state = StateMachineStatus<State, Event>.stopped(
+            lastState: running.state,
+            start: _start,
+          );
+        },
+      );
 
   @override
   void onState<S extends State>(OnEnterState<State, S, Event> cb) {
@@ -22,65 +126,30 @@ class MachineProviderElement<State, Event>
   }
 }
 
-class _StateMachineProvider<State, Event>
-    extends AlwaysAliveProviderBase<StateMachine<State, Event>> {
-  _StateMachineProvider(this._create, {String? name}) : super(name);
-  final Create<StateMachine<State, Event>, MachineProviderRef<State, Event>>
-      _create;
+// ignore: subtype_of_sealed_class
+@sealed
+class StateMachineProvider<State, Event>
+    extends AlwaysAliveProviderBase<StateMachineStatus<State, Event>> {
+  StateMachineProvider(this._create, {String? name}) : super(name);
+
+  // static const family = StateMachineProviderFamilyBuilder();
+  // static const autoDispose = AutoDisposeStateMachineProviderBuilder();
+  // static const autoDisposeFamily =
+  //     AutoDisposeStateMachineProviderFamilyBuilder();
+
+  final Create<State, MachineProviderRef<State, Event>> _create;
 
   @override
-  StateMachine<State, Event> create(MachineProviderRef<State, Event> ref) =>
-      _create(ref);
-
-  @override
-  bool recreateShouldNotify(StateMachine<State, Event> previousState,
-      StateMachine<State, Event> newState) {
-    return previousState != newState;
+  StateMachineStatus<State, Event> create(
+      MachineProviderRef<State, Event> ref) {
+    final ele = ref as MachineProviderElement<State, Event>;
+    ele.initialState = _create(ref);
+    return ele.initialStatus;
   }
 
   @override
   MachineProviderElement<State, Event> createElement() =>
       MachineProviderElement(this);
-}
-
-class StateMachineProvider<State, Event>
-    extends AlwaysAliveProviderBase<StateMachineStatus<State, Event>> {
-  StateMachineProvider(this._create, {String? name}) : super(name);
-
-  static const family = StateMachineProviderFamilyBuilder();
-  static const autoDispose = AutoDisposeStateMachineProviderBuilder();
-  static const autoDisposeFamily =
-      AutoDisposeStateMachineProviderFamilyBuilder();
-
-  final Create<State, MachineProviderRef<State, Event>> _create;
-
-  late final _StateMachineProvider<State, Event> machine =
-      _StateMachineProvider<State, Event>((ref) {
-    final scheduler = ref.watch(_$scheduler);
-    final ele = ref as MachineProviderElement<State, Event>;
-    final initialState = _create(ref);
-    return StateMachine<State, Event>(initialState, ele._states, scheduler);
-  });
-
-  @override
-  StateMachineStatus<State, Event> create(
-      covariant ProviderRef<StateMachineStatus<State, Event>> ref) {
-    final m = ref.watch(machine);
-    StateMachineStatus<State, Event>? initial;
-    ref.onDispose(m._notifier.addListener((state) {
-      if (null == initial) {
-        initial = state;
-      } else {
-        ref.state = state;
-      }
-    }));
-
-    return initial!;
-  }
-
-  @override
-  ProviderElement<StateMachineStatus<State, Event>> createElement() =>
-      ProviderElement(this);
 
   @override
   bool recreateShouldNotify(
@@ -89,6 +158,13 @@ class StateMachineProvider<State, Event>
   ) {
     return true;
   }
+
+  @override
+  SetupOverride get setupOverride => (setup) {
+        setup(origin: this, override: this);
+        // setup(origin: future, override: future);
+        setup(origin: Object(), override: Object());
+      };
 }
 
 class StateMachineProviderFamily<State, Event, Arg> extends Family<

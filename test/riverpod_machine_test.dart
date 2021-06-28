@@ -153,12 +153,12 @@ void main() {
     });
 
     test('cannot stop machine when it is not started', () {
-      expect(() => container.read(provider.machine).stop(),
+      expect(() => container.read(provider.machine)._stop(),
           throwsA(isA<AssertionError>()));
     });
 
     test('cannot stop machine when it is stopped', () {
-      expect(() => container.read(provider.machine).stop(),
+      expect(() => container.read(provider.machine)._stop(),
           throwsA(isA<AssertionError>()));
     });
   });
@@ -196,7 +196,7 @@ void main() {
 
       container.read(provider.machine)
         ..start()
-        ..stop();
+        .._stop();
 
       expect(
           container.read(provider),
@@ -332,7 +332,7 @@ void main() {
       expect(container.read(provider.machine).canSend(const Event1.toBar()),
           isFalse);
 
-      container.read(provider.machine).stop();
+      container.read(provider.machine)._stop();
       expect(container.read(provider.machine).canSend(const Event1.next()),
           isFalse);
     });
@@ -369,7 +369,7 @@ void main() {
 
       container.read(provider.machine)
         ..start()
-        ..stop();
+        .._stop();
 
       expect(() => container.read(provider.machine).send(const Event1.next()),
           throwsA(isA<AssertionError>()));

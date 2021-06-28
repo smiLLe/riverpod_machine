@@ -16,19 +16,31 @@ final _privateConstructorUsedError = UnsupportedError(
 class _$StateMachineStatusTearOff {
   const _$StateMachineStatusTearOff();
 
-  _NotStarted<State, Event> notStarted<State, Event>() {
-    return _NotStarted<State, Event>();
-  }
-
-  _Stopped<State, Event> stopped<State, Event>({required State lastState}) {
-    return _Stopped<State, Event>(
-      lastState: lastState,
+  _NotStarted<State, Event> notStarted<State, Event>(
+      {required void Function() start}) {
+    return _NotStarted<State, Event>(
+      start: start,
     );
   }
 
-  _Running<State, Event> running<State, Event>({required State state}) {
+  _Stopped<State, Event> stopped<State, Event>(
+      {required State lastState, required void Function() start}) {
+    return _Stopped<State, Event>(
+      lastState: lastState,
+      start: start,
+    );
+  }
+
+  _Running<State, Event> running<State, Event>(
+      {required State state,
+      required void Function(Event) send,
+      required bool Function(Event) canSend,
+      required void Function() stop}) {
     return _Running<State, Event>(
       state: state,
+      send: send,
+      canSend: canSend,
+      stop: stop,
     );
   }
 }
@@ -40,16 +52,20 @@ const $StateMachineStatus = _$StateMachineStatusTearOff();
 mixin _$StateMachineStatus<State, Event> {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() notStarted,
-    required TResult Function(State lastState) stopped,
-    required TResult Function(State state) running,
+    required TResult Function(void Function() start) notStarted,
+    required TResult Function(State lastState, void Function() start) stopped,
+    required TResult Function(State state, void Function(Event) send,
+            bool Function(Event) canSend, void Function() stop)
+        running,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? notStarted,
-    TResult Function(State lastState)? stopped,
-    TResult Function(State state)? running,
+    TResult Function(void Function() start)? notStarted,
+    TResult Function(State lastState, void Function() start)? stopped,
+    TResult Function(State state, void Function(Event) send,
+            bool Function(Event) canSend, void Function() stop)?
+        running,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -92,6 +108,7 @@ abstract class _$NotStartedCopyWith<State, Event, $Res> {
   factory _$NotStartedCopyWith(_NotStarted<State, Event> value,
           $Res Function(_NotStarted<State, Event>) then) =
       __$NotStartedCopyWithImpl<State, Event, $Res>;
+  $Res call({void Function() start});
 }
 
 /// @nodoc
@@ -105,46 +122,75 @@ class __$NotStartedCopyWithImpl<State, Event, $Res>
   @override
   _NotStarted<State, Event> get _value =>
       super._value as _NotStarted<State, Event>;
+
+  @override
+  $Res call({
+    Object? start = freezed,
+  }) {
+    return _then(_NotStarted<State, Event>(
+      start: start == freezed
+          ? _value.start
+          : start // ignore: cast_nullable_to_non_nullable
+              as void Function(),
+    ));
+  }
 }
 
 /// @nodoc
 
 class _$_NotStarted<State, Event> implements _NotStarted<State, Event> {
-  _$_NotStarted();
+  _$_NotStarted({required this.start});
+
+  @override
+  final void Function() start;
 
   @override
   String toString() {
-    return 'StateMachineStatus<$State, $Event>.notStarted()';
+    return 'StateMachineStatus<$State, $Event>.notStarted(start: $start)';
   }
 
   @override
   bool operator ==(dynamic other) {
-    return identical(this, other) || (other is _NotStarted<State, Event>);
+    return identical(this, other) ||
+        (other is _NotStarted<State, Event> &&
+            (identical(other.start, start) ||
+                const DeepCollectionEquality().equals(other.start, start)));
   }
 
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode =>
+      runtimeType.hashCode ^ const DeepCollectionEquality().hash(start);
+
+  @JsonKey(ignore: true)
+  @override
+  _$NotStartedCopyWith<State, Event, _NotStarted<State, Event>> get copyWith =>
+      __$NotStartedCopyWithImpl<State, Event, _NotStarted<State, Event>>(
+          this, _$identity);
 
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() notStarted,
-    required TResult Function(State lastState) stopped,
-    required TResult Function(State state) running,
+    required TResult Function(void Function() start) notStarted,
+    required TResult Function(State lastState, void Function() start) stopped,
+    required TResult Function(State state, void Function(Event) send,
+            bool Function(Event) canSend, void Function() stop)
+        running,
   }) {
-    return notStarted();
+    return notStarted(start);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? notStarted,
-    TResult Function(State lastState)? stopped,
-    TResult Function(State state)? running,
+    TResult Function(void Function() start)? notStarted,
+    TResult Function(State lastState, void Function() start)? stopped,
+    TResult Function(State state, void Function(Event) send,
+            bool Function(Event) canSend, void Function() stop)?
+        running,
     required TResult orElse(),
   }) {
     if (notStarted != null) {
-      return notStarted();
+      return notStarted(start);
     }
     return orElse();
   }
@@ -176,7 +222,13 @@ class _$_NotStarted<State, Event> implements _NotStarted<State, Event> {
 
 abstract class _NotStarted<State, Event>
     implements StateMachineStatus<State, Event> {
-  factory _NotStarted() = _$_NotStarted<State, Event>;
+  factory _NotStarted({required void Function() start}) =
+      _$_NotStarted<State, Event>;
+
+  void Function() get start => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  _$NotStartedCopyWith<State, Event, _NotStarted<State, Event>> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -184,7 +236,7 @@ abstract class _$StoppedCopyWith<State, Event, $Res> {
   factory _$StoppedCopyWith(_Stopped<State, Event> value,
           $Res Function(_Stopped<State, Event>) then) =
       __$StoppedCopyWithImpl<State, Event, $Res>;
-  $Res call({State lastState});
+  $Res call({State lastState, void Function() start});
 }
 
 /// @nodoc
@@ -201,12 +253,17 @@ class __$StoppedCopyWithImpl<State, Event, $Res>
   @override
   $Res call({
     Object? lastState = freezed,
+    Object? start = freezed,
   }) {
     return _then(_Stopped<State, Event>(
       lastState: lastState == freezed
           ? _value.lastState
           : lastState // ignore: cast_nullable_to_non_nullable
               as State,
+      start: start == freezed
+          ? _value.start
+          : start // ignore: cast_nullable_to_non_nullable
+              as void Function(),
     ));
   }
 }
@@ -214,14 +271,16 @@ class __$StoppedCopyWithImpl<State, Event, $Res>
 /// @nodoc
 
 class _$_Stopped<State, Event> implements _Stopped<State, Event> {
-  _$_Stopped({required this.lastState});
+  _$_Stopped({required this.lastState, required this.start});
 
   @override
   final State lastState;
+  @override
+  final void Function() start;
 
   @override
   String toString() {
-    return 'StateMachineStatus<$State, $Event>.stopped(lastState: $lastState)';
+    return 'StateMachineStatus<$State, $Event>.stopped(lastState: $lastState, start: $start)';
   }
 
   @override
@@ -230,12 +289,16 @@ class _$_Stopped<State, Event> implements _Stopped<State, Event> {
         (other is _Stopped<State, Event> &&
             (identical(other.lastState, lastState) ||
                 const DeepCollectionEquality()
-                    .equals(other.lastState, lastState)));
+                    .equals(other.lastState, lastState)) &&
+            (identical(other.start, start) ||
+                const DeepCollectionEquality().equals(other.start, start)));
   }
 
   @override
   int get hashCode =>
-      runtimeType.hashCode ^ const DeepCollectionEquality().hash(lastState);
+      runtimeType.hashCode ^
+      const DeepCollectionEquality().hash(lastState) ^
+      const DeepCollectionEquality().hash(start);
 
   @JsonKey(ignore: true)
   @override
@@ -246,23 +309,27 @@ class _$_Stopped<State, Event> implements _Stopped<State, Event> {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() notStarted,
-    required TResult Function(State lastState) stopped,
-    required TResult Function(State state) running,
+    required TResult Function(void Function() start) notStarted,
+    required TResult Function(State lastState, void Function() start) stopped,
+    required TResult Function(State state, void Function(Event) send,
+            bool Function(Event) canSend, void Function() stop)
+        running,
   }) {
-    return stopped(lastState);
+    return stopped(lastState, start);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? notStarted,
-    TResult Function(State lastState)? stopped,
-    TResult Function(State state)? running,
+    TResult Function(void Function() start)? notStarted,
+    TResult Function(State lastState, void Function() start)? stopped,
+    TResult Function(State state, void Function(Event) send,
+            bool Function(Event) canSend, void Function() stop)?
+        running,
     required TResult orElse(),
   }) {
     if (stopped != null) {
-      return stopped(lastState);
+      return stopped(lastState, start);
     }
     return orElse();
   }
@@ -294,9 +361,11 @@ class _$_Stopped<State, Event> implements _Stopped<State, Event> {
 
 abstract class _Stopped<State, Event>
     implements StateMachineStatus<State, Event> {
-  factory _Stopped({required State lastState}) = _$_Stopped<State, Event>;
+  factory _Stopped({required State lastState, required void Function() start}) =
+      _$_Stopped<State, Event>;
 
   State get lastState => throw _privateConstructorUsedError;
+  void Function() get start => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   _$StoppedCopyWith<State, Event, _Stopped<State, Event>> get copyWith =>
       throw _privateConstructorUsedError;
@@ -307,7 +376,11 @@ abstract class _$RunningCopyWith<State, Event, $Res> {
   factory _$RunningCopyWith(_Running<State, Event> value,
           $Res Function(_Running<State, Event>) then) =
       __$RunningCopyWithImpl<State, Event, $Res>;
-  $Res call({State state});
+  $Res call(
+      {State state,
+      void Function(Event) send,
+      bool Function(Event) canSend,
+      void Function() stop});
 }
 
 /// @nodoc
@@ -324,12 +397,27 @@ class __$RunningCopyWithImpl<State, Event, $Res>
   @override
   $Res call({
     Object? state = freezed,
+    Object? send = freezed,
+    Object? canSend = freezed,
+    Object? stop = freezed,
   }) {
     return _then(_Running<State, Event>(
       state: state == freezed
           ? _value.state
           : state // ignore: cast_nullable_to_non_nullable
               as State,
+      send: send == freezed
+          ? _value.send
+          : send // ignore: cast_nullable_to_non_nullable
+              as void Function(Event),
+      canSend: canSend == freezed
+          ? _value.canSend
+          : canSend // ignore: cast_nullable_to_non_nullable
+              as bool Function(Event),
+      stop: stop == freezed
+          ? _value.stop
+          : stop // ignore: cast_nullable_to_non_nullable
+              as void Function(),
     ));
   }
 }
@@ -337,14 +425,24 @@ class __$RunningCopyWithImpl<State, Event, $Res>
 /// @nodoc
 
 class _$_Running<State, Event> implements _Running<State, Event> {
-  _$_Running({required this.state});
+  _$_Running(
+      {required this.state,
+      required this.send,
+      required this.canSend,
+      required this.stop});
 
   @override
   final State state;
+  @override
+  final void Function(Event) send;
+  @override
+  final bool Function(Event) canSend;
+  @override
+  final void Function() stop;
 
   @override
   String toString() {
-    return 'StateMachineStatus<$State, $Event>.running(state: $state)';
+    return 'StateMachineStatus<$State, $Event>.running(state: $state, send: $send, canSend: $canSend, stop: $stop)';
   }
 
   @override
@@ -352,12 +450,23 @@ class _$_Running<State, Event> implements _Running<State, Event> {
     return identical(this, other) ||
         (other is _Running<State, Event> &&
             (identical(other.state, state) ||
-                const DeepCollectionEquality().equals(other.state, state)));
+                const DeepCollectionEquality().equals(other.state, state)) &&
+            (identical(other.send, send) ||
+                const DeepCollectionEquality().equals(other.send, send)) &&
+            (identical(other.canSend, canSend) ||
+                const DeepCollectionEquality()
+                    .equals(other.canSend, canSend)) &&
+            (identical(other.stop, stop) ||
+                const DeepCollectionEquality().equals(other.stop, stop)));
   }
 
   @override
   int get hashCode =>
-      runtimeType.hashCode ^ const DeepCollectionEquality().hash(state);
+      runtimeType.hashCode ^
+      const DeepCollectionEquality().hash(state) ^
+      const DeepCollectionEquality().hash(send) ^
+      const DeepCollectionEquality().hash(canSend) ^
+      const DeepCollectionEquality().hash(stop);
 
   @JsonKey(ignore: true)
   @override
@@ -368,23 +477,27 @@ class _$_Running<State, Event> implements _Running<State, Event> {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function() notStarted,
-    required TResult Function(State lastState) stopped,
-    required TResult Function(State state) running,
+    required TResult Function(void Function() start) notStarted,
+    required TResult Function(State lastState, void Function() start) stopped,
+    required TResult Function(State state, void Function(Event) send,
+            bool Function(Event) canSend, void Function() stop)
+        running,
   }) {
-    return running(state);
+    return running(state, send, canSend, stop);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? notStarted,
-    TResult Function(State lastState)? stopped,
-    TResult Function(State state)? running,
+    TResult Function(void Function() start)? notStarted,
+    TResult Function(State lastState, void Function() start)? stopped,
+    TResult Function(State state, void Function(Event) send,
+            bool Function(Event) canSend, void Function() stop)?
+        running,
     required TResult orElse(),
   }) {
     if (running != null) {
-      return running(state);
+      return running(state, send, canSend, stop);
     }
     return orElse();
   }
@@ -416,9 +529,16 @@ class _$_Running<State, Event> implements _Running<State, Event> {
 
 abstract class _Running<State, Event>
     implements StateMachineStatus<State, Event> {
-  factory _Running({required State state}) = _$_Running<State, Event>;
+  factory _Running(
+      {required State state,
+      required void Function(Event) send,
+      required bool Function(Event) canSend,
+      required void Function() stop}) = _$_Running<State, Event>;
 
   State get state => throw _privateConstructorUsedError;
+  void Function(Event) get send => throw _privateConstructorUsedError;
+  bool Function(Event) get canSend => throw _privateConstructorUsedError;
+  void Function() get stop => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   _$RunningCopyWith<State, Event, _Running<State, Event>> get copyWith =>
       throw _privateConstructorUsedError;
