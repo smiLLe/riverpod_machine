@@ -143,6 +143,9 @@ class _$MachineNotStarted<State, Event>
   _$MachineNotStarted({required this.start});
 
   @override
+
+  /// Start the StateMachine. This will allow to send events.
+  /// It will also enter the initial state.
   final void Function() start;
 
   @override
@@ -226,6 +229,8 @@ abstract class MachineNotStarted<State, Event>
   factory MachineNotStarted({required void Function() start}) =
       _$MachineNotStarted<State, Event>;
 
+  /// Start the StateMachine. This will allow to send events.
+  /// It will also enter the initial state.
   void Function() get start => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $MachineNotStartedCopyWith<State, Event, MachineNotStarted<State, Event>>
@@ -276,8 +281,13 @@ class _$MachineStopped<State, Event> implements MachineStopped<State, Event> {
   _$MachineStopped({required this.lastState, required this.start});
 
   @override
+
+  /// the last State the StateMachine was in.
   final State lastState;
   @override
+
+  /// Start the StateMachine. This will allow to send events.
+  /// It will also enter the initial state.
   final void Function() start;
 
   @override
@@ -367,7 +377,11 @@ abstract class MachineStopped<State, Event>
       {required State lastState,
       required void Function() start}) = _$MachineStopped<State, Event>;
 
+  /// the last State the StateMachine was in.
   State get lastState => throw _privateConstructorUsedError;
+
+  /// Start the StateMachine. This will allow to send events.
+  /// It will also enter the initial state.
   void Function() get start => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $MachineStoppedCopyWith<State, Event, MachineStopped<State, Event>>
@@ -438,10 +452,20 @@ class _$MachineRunning<State, Event> implements MachineRunning<State, Event> {
   @override
   final State state;
   @override
+
+  /// Send and event to the machine and trigger all event listeners that subscribe
+  /// to the given event in the current active state.
   final void Function(Event) send;
   @override
+
+  /// Check whether it is possible to send an event to the StateMachine.
+  /// This will return false if machine is not running or the current active state
+  /// has no event listener
   final bool Function(Event) canSend;
   @override
+
+  /// Stop the [StateMachine]. It will no longer be possible to send events.
+  /// It will also exit the current state.
   final void Function() stop;
 
   @override
@@ -540,8 +564,18 @@ abstract class MachineRunning<State, Event>
       required void Function() stop}) = _$MachineRunning<State, Event>;
 
   State get state => throw _privateConstructorUsedError;
+
+  /// Send and event to the machine and trigger all event listeners that subscribe
+  /// to the given event in the current active state.
   void Function(Event) get send => throw _privateConstructorUsedError;
+
+  /// Check whether it is possible to send an event to the StateMachine.
+  /// This will return false if machine is not running or the current active state
+  /// has no event listener
   bool Function(Event) get canSend => throw _privateConstructorUsedError;
+
+  /// Stop the [StateMachine]. It will no longer be possible to send events.
+  /// It will also exit the current state.
   void Function() get stop => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $MachineRunningCopyWith<State, Event, MachineRunning<State, Event>>

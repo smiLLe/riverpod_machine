@@ -11,6 +11,10 @@ part 'state_machine_provider.freezed.dart';
 typedef OnEnterState<State, S extends State, Event> = void Function(
     NodeConfig<State, S, Event> cfg);
 
+typedef MachineStart<State, Event> = void Function();
+typedef MachineStop<State, Event> = void Function();
+typedef MachineSend<State, Event> = void Function(Event event);
+
 mixin MachineMixin<State, Event>
     on ProviderElementBase<StateMachineStatus<State, Event>> {
   late final State initialState;
@@ -65,9 +69,6 @@ mixin MachineMixin<State, Event>
     node.enterState(current!);
   }
 
-  /// Check whether it is possible to send an event to the [StateMachine].
-  /// This will return false if machine is not running or the current active state
-  /// has no event listener
   bool canSend(Event event) => state.map(
         notStarted: (_) => false,
         stopped: (_) => false,
@@ -77,8 +78,6 @@ mixin MachineMixin<State, Event>
         },
       );
 
-  /// Send and event to the machine and trigger all event listeners that subscribe
-  /// to the given event in the current active state.
   void send(Event event) {
     state.map(
       notStarted: (notStarted) {
@@ -95,8 +94,6 @@ mixin MachineMixin<State, Event>
     );
   }
 
-  /// Start the [StateMachine]. This will allow to send events.
-  /// It will also enter the initial state.
   void start() => state.map(
         running: (running) {
           assert(false, 'Cannot start $type because it is already running');
@@ -109,8 +106,6 @@ mixin MachineMixin<State, Event>
         }),
       );
 
-  /// Stop the [StateMachine]. It will no longer be possible to send events.
-  /// It will also exit the current state.
   void stop() => state.map(
         notStarted: (_) {
           assert(false,
@@ -129,22 +124,46 @@ mixin MachineMixin<State, Event>
       );
 }
 
+/// The Status of a [StateMachineProvider]
 @freezed
 class StateMachineStatus<State, Event> with _$StateMachineStatus<State, Event> {
+  /// The default initial Status of a StateMachine. Indicates that the StateMachine
+  /// has never been started or stopped before. It is not possible to send events
+  /// to the StateMachine
   factory StateMachineStatus.notStarted({
-    required void Function() start,
+    /// Start the StateMachine. This will allow to send events.
+    /// It will also enter the initial state.
+    required MachineStart<State, Event> start,
   }) = MachineNotStarted<State, Event>;
 
+  /// StateMachine has been stopped. It is no longer possible to send events to
+  /// Machine.
   factory StateMachineStatus.stopped({
+    /// the last State the StateMachine was in.
     required State lastState,
-    required void Function() start,
+
+    /// Start the StateMachine. This will allow to send events.
+    /// It will also enter the initial state.
+    required MachineStart<State, Event> start,
   }) = MachineStopped<State, Event>;
 
+  /// StateMachine is in an active Status. States can change and it is possible
+  /// to send events to the StateMachine
   factory StateMachineStatus.running({
     required State state,
-    required void Function(Event event) send,
+
+    /// Send and event to the machine and trigger all event listeners that subscribe
+    /// to the given event in the current active state.
+    required MachineSend<State, Event> send,
+
+    /// Check whether it is possible to send an event to the StateMachine.
+    /// This will return false if machine is not running or the current active state
+    /// has no event listener
     required bool Function(Event event) canSend,
-    required void Function() stop,
+
+    /// Stop the [StateMachine]. It will no longer be possible to send events.
+    /// It will also exit the current state.
+    required MachineStop<State, Event> stop,
   }) = MachineRunning<State, Event>;
 }
 
@@ -191,6 +210,8 @@ class NodeConfig<State, S extends State, Event> {
 
   /// When leaving the current state, execute the callback.
   /// This is especially useful for cleaning up async processes.
+  /// If the state is no longer active and this function is called, it will
+  /// automatically and immediately execute [cb]
   void onExit(void Function() cb) {
     if (null != _machine) {
       _onLeave.add(cb);
