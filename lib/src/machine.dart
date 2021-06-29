@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:collection/collection.dart';
+import 'package:riverpod/src/framework.dart';
 
 part 'scheduler.dart';
 part 'provider.dart';
@@ -33,8 +34,7 @@ class StateNode<State, S extends State, Event> {
 
   final OnEnterState<State, S, Event> _cb;
 
-  NodeConfig<State, S, Event> getConfig(
-          MachineProviderElement<State, Event> machine) =>
+  NodeConfig<State, S, Event> getConfig(MachineMixin<State, Event> machine) =>
       NodeConfig<State, S, Event>(machine);
 
   void enterState(NodeConfig<State, S, Event> cfg) {
@@ -54,7 +54,7 @@ class _EventCb<Event, E extends Event> {
 class NodeConfig<State, S extends State, Event> {
   NodeConfig(this._machine);
 
-  MachineProviderElement<State, Event>? _machine;
+  MachineMixin<State, Event>? _machine;
   final List<void Function()> _onLeave = [];
   final List<_EventCb<Event, Event>> _onEvent = [];
 
@@ -108,10 +108,10 @@ class NodeConfig<State, S extends State, Event> {
     assert(null != _machine,
         'Trying to transition to $state in $S which is no longer active');
     if (null != _machine) {
-      final cur = _machine!._current;
-      _machine!._scheduler.schedule(() {
-        if (cur != _machine?._current) return;
-        _machine!._transition(state);
+      final cur = _machine!.current;
+      _machine!.scheduler.schedule(() {
+        if (cur != _machine?.current) return;
+        _machine!.transition(state);
       });
     }
   }

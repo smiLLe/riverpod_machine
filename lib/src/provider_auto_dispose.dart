@@ -1,136 +1,107 @@
 part of 'machine.dart';
 
-// abstract class AutoDisposeMachineProviderRef<State, Event>
-//     implements AutoDisposeProviderRefBase {
-//   /// Adding a state to the [StateMachine].
-//   /// The given callback will always execute when the state is entered.
-//   ///
-//   /// This method must only be called while the provider is being created.
-//   void onState<S extends State>(OnEnterState<State, S, Event> cb);
-// }
+abstract class AutoDisposeMachineProviderRef<State, Event>
+    implements AutoDisposeProviderRefBase, MachineProviderRef<State, Event> {}
 
-// class AutoDisposeStateMachineProvider<State, Event>
-//     extends AlwaysAliveProviderBase<StateMachineStatus<State, Event>> {
-//   AutoDisposeStateMachineProvider(this._create, {String? name}) : super(name);
+class AutoDisposeMachineProviderElement<State, Event>
+    extends AutoDisposeProviderElementBase<StateMachineStatus<State, Event>>
+    with MachineMixin<State, Event>
+    implements AutoDisposeMachineProviderRef<State, Event> {
+  AutoDisposeMachineProviderElement(
+      ProviderBase<StateMachineStatus<State, Event>> provider)
+      : super(provider);
 
-//   final Create<State, AutoDisposeMachineProviderRef<State, Event>> _create;
+  @override
+  String get type => provider.toString();
 
-//   late final _AutoDisposeStateMachineProvider<State, Event> machine =
-//       _AutoDisposeStateMachineProvider<State, Event>((ref) {
-//     final scheduler = ref.watch(_$scheduler);
-//     final ele = ref as AutoDisposeMachineProviderElement<State, Event>;
-//     final initialState = _create(ref);
-//     return StateMachine<State, Event>(initialState, ele._states, scheduler);
-//   });
+  @override
+  void onState<S extends State>(OnEnterState<State, S, Event> cb) {
+    states.add(StateNode<State, S, Event>(cb));
+  }
+}
 
-//   @override
-//   StateMachineStatus<State, Event> create(
-//       covariant AutoDisposeProviderRef<StateMachineStatus<State, Event>> ref) {
-//     final m = ref.watch(machine);
-//     StateMachineStatus<State, Event>? initial;
-//     ref.onDispose(m._notifier.addListener((state) {
-//       if (null == initial) {
-//         initial = state;
-//       } else {
-//         ref.state = state;
-//       }
-//     }));
+// ignore: subtype_of_sealed_class
+class AutoDisposeStateMachineProvider<State, Event>
+    extends AutoDisposeProviderBase<StateMachineStatus<State, Event>> {
+  AutoDisposeStateMachineProvider(this._create, {String? name}) : super(name);
 
-//     return initial!;
-//   }
+  final Create<State, AutoDisposeMachineProviderRef<State, Event>> _create;
 
-//   @override
-//   bool recreateShouldNotify(
-//     StateMachineStatus<State, Event> previousState,
-//     StateMachineStatus<State, Event> newState,
-//   ) {
-//     return true;
-//   }
+  @override
+  StateMachineStatus<State, Event> create(
+      AutoDisposeMachineProviderRef<State, Event> ref) {
+    final ele = ref as AutoDisposeMachineProviderElement<State, Event>;
+    ele.initialState = _create(ref);
+    return ele.initialStatus;
+  }
 
-//   @override
-//   AutoDisposeProviderElement<StateMachineStatus<State, Event>> createElement() {
-//     return AutoDisposeProviderElement(this);
-//   }
-// }
+  @override
+  AutoDisposeProviderElementBase<StateMachineStatus<State, Event>>
+      createElement() {
+    return AutoDisposeMachineProviderElement<State, Event>(this);
+  }
 
-// class AutoDisposeMachineProviderElement<State, Event>
-//     extends AutoDisposeProviderElementBase<StateMachine<State, Event>>
-//     implements AutoDisposeMachineProviderRef<State, Event> {
-//   AutoDisposeMachineProviderElement(
-//       ProviderBase<StateMachine<State, Event>> provider)
-//       : super(provider);
+  @override
+  bool recreateShouldNotify(
+    StateMachineStatus<State, Event> previousState,
+    StateMachineStatus<State, Event> newState,
+  ) {
+    return true;
+  }
 
-//   final List<StateNode<State, State, Event>> _states = [];
+  @override
+  void Function(
+    void Function({
+      required ProviderBase origin,
+      required ProviderBase override,
+    })
+        setup,
+  ) get setupOverride => (setup) {
+        setup(origin: this, override: this);
+        // setup(origin: future, override: future);
+        // setup(origin: Object(), override: Object());
+      };
+}
 
-//   @override
-//   void onState<S extends State>(OnEnterState<State, S, Event> cb) {
-//     _states.add(StateNode<State, S, Event>(cb));
-//   }
-// }
+class AutoDisposeStateMachineProviderFamily<State, Event, Arg> extends Family<
+    StateMachineStatus<State, Event>,
+    Arg,
+    AutoDisposeStateMachineProvider<State, Event>> {
+  AutoDisposeStateMachineProviderFamily(this._create, {String? name})
+      : super(name);
 
-// class _AutoDisposeStateMachineProvider<State, Event>
-//     extends AutoDisposeProviderBase<StateMachine<State, Event>> {
-//   _AutoDisposeStateMachineProvider(this._create, {String? name}) : super(name);
-//   final Create<StateMachine<State, Event>,
-//       AutoDisposeMachineProviderRef<State, Event>> _create;
+  final FamilyCreate<State, AutoDisposeMachineProviderRef<State, Event>, Arg>
+      _create;
 
-//   @override
-//   StateMachine<State, Event> create(
-//           AutoDisposeMachineProviderRef<State, Event> ref) =>
-//       _create(ref);
+  @override
+  AutoDisposeStateMachineProvider<State, Event> create(Arg argument) {
+    return AutoDisposeStateMachineProvider<State, Event>(
+      (ref) => _create(ref, argument),
+      name: name,
+    );
+  }
+}
 
-//   @override
-//   bool recreateShouldNotify(StateMachine<State, Event> previousState,
-//       StateMachine<State, Event> newState) {
-//     return previousState != newState;
-//   }
+class AutoDisposeStateMachineProviderBuilder {
+  const AutoDisposeStateMachineProviderBuilder();
 
-//   @override
-//   AutoDisposeMachineProviderElement<State, Event> createElement() =>
-//       AutoDisposeMachineProviderElement(this);
-// }
+  AutoDisposeStateMachineProvider<State, Event> call<State, Event>(
+    Create<State, AutoDisposeMachineProviderRef<State, Event>> create, {
+    String? name,
+  }) {
+    return AutoDisposeStateMachineProvider(create, name: name);
+  }
+}
 
-// class AutoDisposeStateMachineProviderFamily<State, Event, Arg> extends Family<
-//     StateMachineStatus<State, Event>,
-//     Arg,
-//     AutoDisposeStateMachineProvider<State, Event>> {
-//   AutoDisposeStateMachineProviderFamily(this._create, {String? name})
-//       : super(name);
+class AutoDisposeStateMachineProviderFamilyBuilder {
+  const AutoDisposeStateMachineProviderFamilyBuilder();
 
-//   final FamilyCreate<State, AutoDisposeMachineProviderRef<State, Event>, Arg>
-//       _create;
-
-//   @override
-//   AutoDisposeStateMachineProvider<State, Event> create(Arg argument) {
-//     return AutoDisposeStateMachineProvider<State, Event>(
-//       (ref) => _create(ref, argument),
-//       name: name,
-//     );
-//   }
-// }
-
-// class AutoDisposeStateMachineProviderBuilder {
-//   const AutoDisposeStateMachineProviderBuilder();
-
-//   /// {@macro riverpod.autoDispose}
-//   AutoDisposeStateMachineProvider<State, Event> call<State, Event>(
-//     Create<State, AutoDisposeMachineProviderRef<State, Event>> create, {
-//     String? name,
-//   }) {
-//     return AutoDisposeStateMachineProvider(create, name: name);
-//   }
-// }
-
-// class AutoDisposeStateMachineProviderFamilyBuilder {
-//   const AutoDisposeStateMachineProviderFamilyBuilder();
-
-//   /// {@macro riverpod.family}
-//   AutoDisposeStateMachineProviderFamily<State, Event, Arg>
-//       call<State, Event, Arg>(
-//     FamilyCreate<State, AutoDisposeMachineProviderRef<State, Event>, Arg>
-//         create, {
-//     String? name,
-//   }) {
-//     return AutoDisposeStateMachineProviderFamily(create, name: name);
-//   }
-// }
+  AutoDisposeStateMachineProviderFamily<State, Event, Arg>
+      call<State, Event, Arg>(
+    FamilyCreate<State, AutoDisposeMachineProviderRef<State, Event>, Arg>
+        create, {
+    String? name,
+  }) {
+    return AutoDisposeStateMachineProviderFamily(create, name: name);
+  }
+}
