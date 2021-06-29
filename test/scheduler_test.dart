@@ -1,6 +1,5 @@
-import 'package:riverpod_machine/src/machine.dart';
+import 'package:riverpod_machine/src/state_machine_provider.dart';
 import 'package:test/test.dart';
-import 'package:riverpod_machine/riverpod_machine.dart';
 
 void main() {
   group('scheduler', () {

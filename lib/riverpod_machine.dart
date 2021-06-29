@@ -1,3 +1,4 @@
 library riverpod_machine;
 
-export 'src/machine.dart' show StateMachineProvider, StateMachineStatus;
+export 'src/state_machine_provider.dart'
+    show StateMachineProvider, StateMachineStatus;

@@ -4,7 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:riverpod/riverpod.dart';
-import 'package:riverpod_machine/src/machine.dart';
+import 'package:riverpod_machine/src/state_machine_provider.dart';
 import 'package:test/test.dart';
 import 'package:riverpod_machine/riverpod_machine.dart';
 

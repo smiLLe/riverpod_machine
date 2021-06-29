@@ -1,4 +1,4 @@
-part of 'machine.dart';
+part of '../state_machine_provider.dart';
 
 abstract class AutoDisposeMachineProviderRef<State, Event>
     implements AutoDisposeProviderRefBase, MachineProviderRef<State, Event> {}
@@ -79,29 +79,5 @@ class AutoDisposeStateMachineProviderFamily<State, Event, Arg> extends Family<
       (ref) => _create(ref, argument),
       name: name,
     );
-  }
-}
-
-class AutoDisposeStateMachineProviderBuilder {
-  const AutoDisposeStateMachineProviderBuilder();
-
-  AutoDisposeStateMachineProvider<State, Event> call<State, Event>(
-    Create<State, AutoDisposeMachineProviderRef<State, Event>> create, {
-    String? name,
-  }) {
-    return AutoDisposeStateMachineProvider(create, name: name);
-  }
-}
-
-class AutoDisposeStateMachineProviderFamilyBuilder {
-  const AutoDisposeStateMachineProviderFamilyBuilder();
-
-  AutoDisposeStateMachineProviderFamily<State, Event, Arg>
-      call<State, Event, Arg>(
-    FamilyCreate<State, AutoDisposeMachineProviderRef<State, Event>, Arg>
-        create, {
-    String? name,
-  }) {
-    return AutoDisposeStateMachineProviderFamily(create, name: name);
   }
 }
