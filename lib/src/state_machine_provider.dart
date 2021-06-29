@@ -9,7 +9,7 @@ part 'state_machine_provider/builder.dart';
 part 'state_machine_provider.freezed.dart';
 
 typedef OnEnterState<State, S extends State, Event> = void Function(
-    NodeConfig<State, S, Event> cfg);
+    StateSelf<State, S, Event> self);
 
 typedef MachineStart<State, Event> = void Function();
 typedef MachineStop<State, Event> = void Function();
@@ -23,7 +23,8 @@ mixin MachineMixin<State, Event>
 
   StateMachineStatus<State, Event> get initialStatus =>
       StateMachineStatus<State, Event>.notStarted(start: start);
-  NodeConfig<State, State, Event>? current;
+  StateSelf<State, State, Event>? inState;
+  late StateMachineStatus<State, Event> status;
   String get type;
 
   StateNode<State, State, Event> getNode(State state) {
@@ -36,50 +37,41 @@ mixin MachineMixin<State, Event>
   @override
   void dispose() {
     cancelCurrent();
-    state.maybeMap(
-      orElse: () {},
-      running: (running) {
-        state = StateMachineStatus<State, Event>.stopped(
-          lastState: running.state,
-          start: start,
-        );
-      },
-    );
-
     scheduler.dispose();
     states.clear();
     super.dispose();
   }
 
   void cancelCurrent() {
-    current?.dispose();
-    current = null;
+    inState?.dispose();
+    inState = null;
   }
 
   void transition(State state) {
     cancelCurrent();
     final node = getNode(state);
-    current = node.getConfig(this);
-    this.state = StateMachineStatus<State, Event>.running(
+    inState = node.getConfig(this);
+    status = StateMachineStatus<State, Event>.running(
       state: state,
       send: send,
       canSend: canSend,
       stop: stop,
     );
-    node.enterState(current!);
+    node.enterState(inState!);
+    this.state = status;
   }
 
-  bool canSend(Event event) => state.map(
+  bool canSend(Event event) => status.map(
         notStarted: (_) => false,
         stopped: (_) => false,
         running: (running) {
-          final candidate = current?._candidate(event);
+          final candidate = inState?._candidate(event);
           return null != candidate;
         },
       );
 
   void send(Event event) {
-    state.map(
+    status.map(
       notStarted: (notStarted) {
         assert(false, 'Cannot send event to "$type" while it is not running');
       },
@@ -87,14 +79,14 @@ mixin MachineMixin<State, Event>
         assert(false, 'Cannot send event to "$type" while it is stopped');
       },
       running: (running) {
-        final candidate = current?._candidate(event);
+        final candidate = inState?._candidate(event);
         if (null == candidate) return;
         candidate._cb(event);
       },
     );
   }
 
-  void start() => state.map(
+  void start() => status.map(
         running: (running) {
           assert(false, 'Cannot start $type because it is already running');
         },
@@ -106,7 +98,7 @@ mixin MachineMixin<State, Event>
         }),
       );
 
-  void stop() => state.map(
+  void stop() => status.map(
         notStarted: (_) {
           assert(false,
               '$type cannot be stopped because it has not been started, yet');
@@ -116,7 +108,7 @@ mixin MachineMixin<State, Event>
         },
         running: (running) {
           cancelCurrent();
-          state = StateMachineStatus<State, Event>.stopped(
+          state = status = StateMachineStatus<State, Event>.stopped(
             lastState: running.state,
             start: start,
           );
@@ -172,11 +164,11 @@ class StateNode<State, S extends State, Event> {
 
   final OnEnterState<State, S, Event> _cb;
 
-  NodeConfig<State, S, Event> getConfig(MachineMixin<State, Event> machine) =>
-      NodeConfig<State, S, Event>(machine);
+  StateSelf<State, S, Event> getConfig(MachineMixin<State, Event> machine) =>
+      StateSelf<State, S, Event>(machine);
 
-  void enterState(NodeConfig<State, S, Event> cfg) {
-    _cb(cfg);
+  void enterState(StateSelf<State, S, Event> self) {
+    _cb(self);
   }
 
   bool isState(dynamic obj) => obj is S;
@@ -189,17 +181,17 @@ class _EventCb<Event, E extends Event> {
   bool isCandidate(Event obj) => obj is E;
 }
 
-class NodeConfig<State, S extends State, Event> {
-  NodeConfig(this._machine);
+class StateSelf<State, S extends State, Event> {
+  StateSelf(this._machine);
 
   MachineMixin<State, Event>? _machine;
-  final List<void Function()> _onLeave = [];
+  final List<void Function()> _onExit = [];
   final List<_EventCb<Event, Event>> _onEvent = [];
 
   void dispose() {
     _machine = null;
     _onEvent.clear();
-    _onLeave
+    _onExit
       ..forEach((disposer) => disposer())
       ..clear();
   }
@@ -214,7 +206,7 @@ class NodeConfig<State, S extends State, Event> {
   /// automatically and immediately execute [cb]
   void onExit(void Function() cb) {
     if (null != _machine) {
-      _onLeave.add(cb);
+      _onExit.add(cb);
     } else {
       cb();
     }
@@ -235,7 +227,7 @@ class NodeConfig<State, S extends State, Event> {
   /// [MachineProviderRef.onState].
   bool canTransition(State state) {
     if (null == _machine) return false;
-    return _machine!.state.map(
+    return _machine!.status.map(
       notStarted: (notStarted) => false,
       stopped: (stopped) => false,
       running: (running) => true,
@@ -243,14 +235,13 @@ class NodeConfig<State, S extends State, Event> {
   }
 
   /// Transition from the current state to another state.
-  /// This will leave the current state and will execute all [NodeConfig.onExit] callbacks.
+  /// This will leave the current state and will execute all [StateSelf.onExit] callbacks.
   void transition(State state) {
     assert(null != _machine,
         'Trying to transition to $state in $S which is no longer active');
     if (null != _machine) {
-      final cur = _machine!.current;
       _machine!.scheduler.schedule(() {
-        if (cur != _machine?.current) return;
+        if (this != _machine?.inState) return;
         _machine!.transition(state);
       });
     }

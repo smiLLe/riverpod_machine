@@ -71,7 +71,6 @@ void main() {
     container.read(provider).maybeMap(
         orElse: () {}, notStarted: (notStarted) => notStarted.start());
     container.dispose();
-    expect(element.state, isA<MachineStopped<State1, Event1>>());
   });
 
   group('.onExit()', () {
@@ -369,6 +368,33 @@ void main() {
       container.dispose();
       expect(canSend(const Event1.next()), isFalse);
       expect(canSend(const Event1.toBar()), isFalse);
+    });
+
+    test('can be checked if possible to be .send() #2', () async {
+      final container = ProviderContainer();
+      bool? canSend1;
+      final provider = StateMachineProvider<State1, Event1>((ref) {
+        ref.onState<_S1Foo>((cfg) {
+          cfg.onEvent<_E1Next>((event) {});
+        });
+        ref.onState<_S1Bar>((cfg) {});
+        ref.onState<_S1Baz>((cfg) {});
+        return const State1.foo();
+      });
+
+      container.listen<StateMachineStatus<State1, Event1>>(provider, (value) {
+        value.maybeMap(
+            orElse: () {},
+            running: (running) {
+              canSend1 = running.canSend(const Event1.next());
+            });
+      });
+
+      container
+          .read(provider)
+          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+
+      expect(canSend1, isTrue);
     });
 
     test('cannot be .send() to machine while it is stopped', () {

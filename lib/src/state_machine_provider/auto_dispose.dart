@@ -32,6 +32,7 @@ class AutoDisposeStateMachineProvider<State, Event>
       AutoDisposeMachineProviderRef<State, Event> ref) {
     final ele = ref as AutoDisposeMachineProviderElement<State, Event>;
     ele.initialState = _create(ref);
+    ele.status = ele.initialStatus;
     return ele.initialStatus;
   }
 

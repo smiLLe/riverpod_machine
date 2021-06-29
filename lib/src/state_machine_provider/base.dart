@@ -43,6 +43,7 @@ class StateMachineProvider<State, Event>
       MachineProviderRef<State, Event> ref) {
     final ele = ref as MachineProviderElement<State, Event>;
     ele.initialState = _create(ref);
+    ele.status = ele.initialStatus;
     return ele.initialStatus;
   }
 
