@@ -42,9 +42,15 @@ class StateMachineProvider<State, Event>
   StateMachineStatus<State, Event> create(
       MachineProviderRef<State, Event> ref) {
     final ele = ref as MachineProviderElement<State, Event>;
-    ele.initialState = _create(ref);
-    ele.status = ele.initialStatus;
-    return ele.initialStatus;
+    if (!ele.initialized) {
+      ele.initialized = true;
+      ele.scheduler = ref.watch(_$scheduler);
+      ele.initialState = _create(ref);
+      ele.status = ele.initialStatus;
+
+      return ele.initialStatus;
+    }
+    return ele.status;
   }
 
   @override

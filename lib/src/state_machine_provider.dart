@@ -8,6 +8,8 @@ part 'state_machine_provider/builder.dart';
 
 part 'state_machine_provider.freezed.dart';
 
+final _$scheduler = Provider<Scheduler>((_) => Scheduler()..initialize());
+
 typedef OnEnterState<State, S extends State, Event> = void Function(
     StateSelf<State, S, Event> self);
 
@@ -19,12 +21,13 @@ mixin MachineMixin<State, Event>
     on ProviderElementBase<StateMachineStatus<State, Event>> {
   late final State initialState;
   final List<StateNode<State, State, Event>> states = [];
-  final Scheduler scheduler = Scheduler()..initialize();
+  late final Scheduler scheduler;
 
   StateMachineStatus<State, Event> get initialStatus =>
       StateMachineStatus<State, Event>.notStarted(start: start);
   StateSelf<State, State, Event>? inState;
   late StateMachineStatus<State, Event> status;
+  bool initialized = false;
   String get type;
 
   StateNode<State, State, Event> getNode(State state) {
@@ -37,7 +40,6 @@ mixin MachineMixin<State, Event>
   @override
   void dispose() {
     cancelCurrent();
-    scheduler.dispose();
     states.clear();
     super.dispose();
   }
@@ -230,7 +232,7 @@ class StateSelf<State, S extends State, Event> {
     return _machine!.status.map(
       notStarted: (notStarted) => false,
       stopped: (stopped) => false,
-      running: (running) => true,
+      running: (running) => _machine?.inState == this,
     );
   }
 

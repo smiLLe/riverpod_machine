@@ -107,7 +107,7 @@ void main() {
         () async {
       final container = ProviderContainer();
       final onExitCb = MockOnExitCb();
-      final c = Completer();
+      final c = Completer<dynamic>();
       final provider = StateMachineProvider<State1, Event1>((ref) {
         ref.onState<_S1Foo>((cfg) {
           Future(() {
@@ -246,7 +246,7 @@ void main() {
 
     test('async from one state to another', () async {
       final container = ProviderContainer();
-      final completer = Completer();
+      final completer = Completer<dynamic>();
       final provider = StateMachineProvider<State1, Event1>((ref) {
         ref.onState<_S1Foo>((cfg) {
           Future(() {
@@ -272,7 +272,7 @@ void main() {
 
     test('is no longer possible if state has been left before', () async {
       final container = ProviderContainer();
-      final completer = Completer();
+      final completer = Completer<dynamic>();
       final provider = StateMachineProvider<State1, Event1>((ref) {
         ref.onState<_S1Foo>((cfg) {
           cfg.transition(const State1.bar());
@@ -306,7 +306,7 @@ void main() {
 
     test('can be checked', () async {
       final container = ProviderContainer();
-      final completer = Completer();
+      final completer = Completer<dynamic>();
       bool? canTransition1;
       bool? canTransition2;
       final provider = StateMachineProvider<State1, Event1>((ref) {
@@ -460,6 +460,55 @@ void main() {
             ..send(const Event1.next())
             ..send(const Event1.toBar()));
     });
+  });
+
+  test('use other machine in .onState()', () async {
+    final container = ProviderContainer();
+    final childProvider = StateMachineProvider<State1, Event1>((ref) {
+      ref.onState<_S1Foo>((cfg) {
+        cfg.transition(const State1.baz());
+      });
+      ref.onState<_S1Bar>((cfg) {});
+      ref.onState<_S1Baz>((cfg) {});
+      return const State1.foo();
+    });
+
+    final provider = StateMachineProvider<State1, Event1>((ref) {
+      ref.onState<_S1Foo>((cfg) {
+        cfg.onEvent<_E1Next>((event) {});
+        cfg.onExit(() {
+          ref.read(childProvider).maybeMap(
+                orElse: () {},
+                running: (running) => running.stop(),
+              );
+        });
+        ref.watch(childProvider).maybeMap(
+              orElse: () {},
+              notStarted: (notStarted) => notStarted.start(),
+              stopped: (stopped) => stopped.start(),
+            );
+      });
+      ref.onState<_S1Bar>((cfg) {});
+      ref.onState<_S1Baz>((cfg) {});
+      return const State1.foo();
+    });
+
+    container.read(provider).maybeMap(
+        orElse: () {}, notStarted: (notStarted) => notStarted.start());
+
+    expect(
+        container.read(childProvider),
+        isA<MachineRunning<State1, Event1>>()
+            .having((s) => s.state, 'state', equals(const State1.baz())));
+
+    container
+        .read(provider)
+        .maybeMap(orElse: () {}, running: (running) => running.stop());
+
+    expect(
+        container.read(childProvider),
+        isA<MachineStopped<State1, Event1>>()
+            .having((s) => s.lastState, 'state', equals(const State1.baz())));
   });
 }
 
