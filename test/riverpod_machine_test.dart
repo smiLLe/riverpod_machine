@@ -96,8 +96,6 @@ void main() {
           .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
       container.read(provider).maybeMap(
           orElse: () {}, running: (obj) => obj.send(const Event1.next()));
-      // ..start()
-      // ..send(const Event1.next());
 
       verify(onExitCbA()).called(1);
       verify(onExitCbB()).called(1);
@@ -482,7 +480,7 @@ void main() {
                 running: (running) => running.stop(),
               );
         });
-        ref.watch(childProvider).maybeMap(
+        ref.read(childProvider).maybeMap(
               orElse: () {},
               notStarted: (notStarted) => notStarted.start(),
               stopped: (stopped) => stopped.start(),

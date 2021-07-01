@@ -8,10 +8,10 @@ part 'state_machine_provider/builder.dart';
 
 part 'state_machine_provider.freezed.dart';
 
-final _$scheduler = Provider<Scheduler>((_) => Scheduler()..initialize());
-
 typedef OnEnterState<State, S extends State, Event> = void Function(
     StateSelf<State, S, Event> self);
+
+typedef SessionId = int;
 
 typedef MachineStart<State, Event> = void Function();
 typedef MachineStop<State, Event> = void Function();
@@ -21,14 +21,15 @@ mixin MachineMixin<State, Event>
     on ProviderElementBase<StateMachineStatus<State, Event>> {
   late final State initialState;
   final List<StateNode<State, State, Event>> states = [];
-  late final Scheduler scheduler;
 
   StateMachineStatus<State, Event> get initialStatus =>
       StateMachineStatus<State, Event>.notStarted(start: start);
-  StateSelf<State, State, Event>? inState;
-  late StateMachineStatus<State, Event> status;
+  StateNode<State, State, Event>? activeNode;
+  SessionId sessionId = 0;
   bool initialized = false;
   String get type;
+
+  late StateMachineStatus<State, Event> currentStatus;
 
   StateNode<State, State, Event> getNode(State state) {
     return states.firstWhere(
@@ -38,42 +39,48 @@ mixin MachineMixin<State, Event>
   }
 
   @override
+  StateMachineStatus<State, Event> get state => currentStatus;
+
+  @override
   void dispose() {
-    cancelCurrent();
+    activeNode?.becomeInactive();
+    activeNode = null;
     states.clear();
     super.dispose();
   }
 
-  void cancelCurrent() {
-    inState?.dispose();
-    inState = null;
-  }
-
   void transition(State state) {
-    cancelCurrent();
-    final node = getNode(state);
-    inState = node.getConfig(this);
-    status = StateMachineStatus<State, Event>.running(
+    activeNode?.becomeInactive();
+
+    sessionId += 1;
+    final _sId = sessionId;
+
+    currentStatus = StateMachineStatus<State, Event>.running(
       state: state,
       send: send,
       canSend: canSend,
       stop: stop,
     );
-    node.enterState(inState!);
-    this.state = status;
+
+    activeNode = getNode(state);
+    activeNode!.becomeActive(this);
+
+    if (_sId == sessionId) {
+      this.state = currentStatus;
+    }
   }
 
-  bool canSend(Event event) => status.map(
+  bool canSend(Event event) => currentStatus.map(
         notStarted: (_) => false,
         stopped: (_) => false,
         running: (running) {
-          final candidate = inState?._candidate(event);
+          final candidate = activeNode?._state?._candidate(event);
           return null != candidate;
         },
       );
 
   void send(Event event) {
-    status.map(
+    currentStatus.map(
       notStarted: (notStarted) {
         assert(false, 'Cannot send event to "$type" while it is not running');
       },
@@ -81,26 +88,22 @@ mixin MachineMixin<State, Event>
         assert(false, 'Cannot send event to "$type" while it is stopped');
       },
       running: (running) {
-        final candidate = inState?._candidate(event);
+        final candidate = activeNode?._state?._candidate(event);
         if (null == candidate) return;
         candidate._cb(event);
       },
     );
   }
 
-  void start() => status.map(
+  void start() => currentStatus.map(
         running: (running) {
           assert(false, 'Cannot start $type because it is already running');
         },
-        notStarted: (notStarted) => scheduler.schedule(() {
-          transition(initialState);
-        }),
-        stopped: (stopped) => scheduler.schedule(() {
-          transition(initialState);
-        }),
+        notStarted: (notStarted) => transition(initialState),
+        stopped: (stopped) => transition(initialState),
       );
 
-  void stop() => status.map(
+  void stop() => currentStatus.map(
         notStarted: (_) {
           assert(false,
               '$type cannot be stopped because it has not been started, yet');
@@ -109,8 +112,9 @@ mixin MachineMixin<State, Event>
           assert(false, '$type cannot be stopped because it is stopped');
         },
         running: (running) {
-          cancelCurrent();
-          state = status = StateMachineStatus<State, Event>.stopped(
+          activeNode?.becomeInactive();
+          activeNode = null;
+          state = currentStatus = StateMachineStatus<State, Event>.stopped(
             lastState: running.state,
             start: start,
           );
@@ -165,12 +169,16 @@ class StateNode<State, S extends State, Event> {
   StateNode(this._cb);
 
   final OnEnterState<State, S, Event> _cb;
+  StateSelf<State, S, Event>? _state;
 
-  StateSelf<State, S, Event> getConfig(MachineMixin<State, Event> machine) =>
-      StateSelf<State, S, Event>(machine);
+  void becomeActive(MachineMixin<State, Event> machine) {
+    _state = StateSelf<State, S, Event>(machine);
+    _cb(_state!);
+  }
 
-  void enterState(StateSelf<State, S, Event> self) {
-    _cb(self);
+  void becomeInactive() {
+    _state?.dispose();
+    _state = null;
   }
 
   bool isState(dynamic obj) => obj is S;
@@ -229,23 +237,20 @@ class StateSelf<State, S extends State, Event> {
   /// [MachineProviderRef.onState].
   bool canTransition(State state) {
     if (null == _machine) return false;
-    return _machine!.status.map(
+    return _machine!.currentStatus.map(
       notStarted: (notStarted) => false,
       stopped: (stopped) => false,
-      running: (running) => _machine?.inState == this,
+      running: (running) => _machine?.activeNode?._state == this,
     );
   }
 
   /// Transition from the current state to another state.
   /// This will leave the current state and will execute all [StateSelf.onExit] callbacks.
   void transition(State state) {
-    assert(null != _machine,
-        'Trying to transition to $state in $S which is no longer active');
-    if (null != _machine) {
-      _machine!.scheduler.schedule(() {
-        if (this != _machine?.inState) return;
-        _machine!.transition(state);
-      });
+    // assert(null != _machine,
+    //     'Trying to transition to $state in $S which is no longer active');
+    if (null != _machine && this == _machine?.activeNode?._state) {
+      _machine!.transition(state);
     }
   }
 }
