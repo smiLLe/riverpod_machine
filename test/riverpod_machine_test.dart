@@ -460,6 +460,50 @@ void main() {
     });
   });
 
+  test('there is a .previousStatus', () {
+    final container = ProviderContainer();
+    late StateSelf<State1, State1, Event1> self;
+    final provider = StateMachineProvider<State1, Event1>((ref) {
+      ref.onState<_S1Foo>((cfg) {
+        self = cfg;
+        cfg.onEvent<_E1Next>((event) {
+          cfg.transition(const State1.bar());
+        });
+      });
+      ref.onState<_S1Bar>((cfg) {
+        self = cfg;
+        cfg.transition(const State1.baz());
+      });
+      ref.onState<_S1Baz>((cfg) {
+        self = cfg;
+      });
+      return const State1.foo();
+    });
+
+    container
+        .read(provider)
+        .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+    expect(self.previousStatus, isA<MachineNotStarted<State1, Event1>>());
+
+    container.read(provider).maybeMap(
+        orElse: () {}, running: (obj) => obj.send(const Event1.next()));
+    expect(
+        self.previousStatus,
+        isA<MachineRunning<State1, Event1>>()
+            .having((s) => s.state, 'state', const State1.bar()));
+
+    container
+        .read(provider)
+        .maybeMap(orElse: () {}, running: (obj) => obj.stop());
+    container
+        .read(provider)
+        .maybeMap(orElse: () {}, stopped: (stopped) => stopped.start());
+    expect(
+        self.previousStatus,
+        isA<MachineStopped<State1, Event1>>()
+            .having((s) => s.lastState, 'state', const State1.baz()));
+  });
+
   test('use other machine in .onState()', () async {
     final container = ProviderContainer();
     final childProvider = StateMachineProvider<State1, Event1>((ref) {

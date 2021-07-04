@@ -55,6 +55,7 @@ mixin MachineMixin<State, Event>
     sessionId += 1;
     final _sId = sessionId;
 
+    final prevStatus = currentStatus;
     currentStatus = StateMachineStatus<State, Event>.running(
       state: state,
       send: send,
@@ -63,7 +64,7 @@ mixin MachineMixin<State, Event>
     );
 
     activeNode = getNode(state);
-    activeNode!.becomeActive(this);
+    activeNode!.becomeActive(this, prevStatus);
 
     if (_sId == sessionId) {
       this.state = currentStatus;
@@ -171,8 +172,9 @@ class StateNode<State, S extends State, Event> {
   final OnEnterState<State, S, Event> _cb;
   StateSelf<State, S, Event>? _state;
 
-  void becomeActive(MachineMixin<State, Event> machine) {
-    _state = StateSelf<State, S, Event>(machine);
+  void becomeActive(MachineMixin<State, Event> machine,
+      StateMachineStatus<State, Event> prevStatus) {
+    _state = StateSelf<State, S, Event>(machine, prevStatus);
     _cb(_state!);
   }
 
@@ -192,11 +194,15 @@ class _EventCb<Event, E extends Event> {
 }
 
 class StateSelf<State, S extends State, Event> {
-  StateSelf(this._machine);
+  StateSelf(this._machine, this.previousStatus);
 
-  MachineMixin<State, Event>? _machine;
   final List<void Function()> _onExit = [];
   final List<_EventCb<Event, Event>> _onEvent = [];
+
+  /// [StateMachineStatus] that was active before the current.
+  final StateMachineStatus<State, Event> previousStatus;
+
+  MachineMixin<State, Event>? _machine;
 
   void dispose() {
     _machine = null;
