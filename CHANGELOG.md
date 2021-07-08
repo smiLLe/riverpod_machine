@@ -1,3 +1,7 @@
+## 0.0.1-dev.5
+
+* Fix in AutoDisposeRef
+
 ## 0.0.1-dev.4
 
 * Updated Builder Generics
