@@ -36,8 +36,10 @@ void main() {
 
   test('create autoDispose machine provider', () {
     final container = ProviderContainer();
-    final m = StateMachineProvider.autoDispose<State1, Event1>(
-        (ref) => const State1.foo());
+    final m = StateMachineProvider.autoDispose<State1, Event1>((ref) {
+      ref.onState<_S1Foo>((self) {});
+      return const State1.foo();
+    });
     expect(() => container.read(m), isNot(throwsException));
   });
 

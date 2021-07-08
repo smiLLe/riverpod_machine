@@ -1,7 +1,13 @@
 part of '../state_machine_provider.dart';
 
 abstract class AutoDisposeMachineProviderRef<State, Event>
-    implements AutoDisposeProviderRefBase, MachineProviderRef<State, Event> {}
+    implements AutoDisposeProviderRefBase {
+  /// Adding a state to the [StateMachine].
+  /// The given callback will always execute when the state is entered.
+  ///
+  /// This method must only be called while the provider is being created.
+  void onState<S extends State>(OnEnterState<State, S, Event> cb);
+}
 
 class AutoDisposeMachineProviderElement<State, Event>
     extends AutoDisposeProviderElementBase<StateMachineStatus<State, Event>>
