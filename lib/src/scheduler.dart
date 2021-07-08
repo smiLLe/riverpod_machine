@@ -1,4 +1,4 @@
-part of 'machine.dart';
+part of 'state_machine_provider.dart';
 
 class Scheduler {
   final List<void Function()> _queue = [];
