@@ -13,7 +13,7 @@ typedef OnEnterState<State, S extends State, Event> = void Function(
 
 typedef SessionId = int;
 
-typedef MachineStart<State, Event> = void Function();
+typedef MachineStart<State, Event> = void Function({State? state});
 typedef MachineStop<State, Event> = void Function();
 typedef MachineSend<State, Event> = void Function(Event event);
 
@@ -64,7 +64,7 @@ mixin MachineMixin<State, Event>
     );
 
     activeNode = getNode(state);
-    activeNode!.becomeActive(this, prevStatus);
+    activeNode!.becomeActive(_sId, this, prevStatus, state);
 
     if (_sId == sessionId) {
       this.state = currentStatus;
@@ -75,7 +75,7 @@ mixin MachineMixin<State, Event>
         notStarted: (_) => false,
         stopped: (_) => false,
         running: (running) {
-          final candidate = activeNode?._state?._candidate(event);
+          final candidate = activeNode?._candidate(event);
           return null != candidate;
         },
       );
@@ -89,19 +89,19 @@ mixin MachineMixin<State, Event>
         assert(false, 'Cannot send event to "$type" while it is stopped');
       },
       running: (running) {
-        final candidate = activeNode?._state?._candidate(event);
+        final candidate = activeNode?._candidate(event);
         if (null == candidate) return;
         candidate._cb(event);
       },
     );
   }
 
-  void start() => currentStatus.map(
+  void start({State? state}) => currentStatus.map(
         running: (running) {
           assert(false, 'Cannot start $type because it is already running');
         },
-        notStarted: (notStarted) => transition(initialState),
-        stopped: (stopped) => transition(initialState),
+        notStarted: (notStarted) => transition(state ?? initialState),
+        stopped: (stopped) => transition(state ?? initialState),
       );
 
   void stop() => currentStatus.map(
@@ -170,17 +170,54 @@ class StateNode<State, S extends State, Event> {
   StateNode(this._cb);
 
   final OnEnterState<State, S, Event> _cb;
-  StateSelf<State, S, Event>? _state;
 
-  void becomeActive(MachineMixin<State, Event> machine,
-      StateMachineStatus<State, Event> prevStatus) {
-    _state = StateSelf<State, S, Event>(machine, prevStatus);
-    _cb(_state!);
+  final List<void Function()> _onExit = [];
+  final List<_EventCb<Event, Event>> _onEvent = [];
+
+  _EventCb<Event, Event>? _candidate(Event event) {
+    return _onEvent.firstWhereOrNull((element) => element.isCandidate(event));
+  }
+
+  void becomeActive(SessionId sId, MachineMixin<State, Event> machine,
+      StateMachineStatus<State, Event> prevStatus, S state) {
+    _cb(StateSelf<State, S, Event>(
+      currentState: state,
+      previousStatus: prevStatus,
+      transition: (State state) {
+        if (sId == machine.sessionId) {
+          machine.transition(state);
+        }
+      },
+      onEvent: <E extends Event>(void Function(E event) cb) {
+        if (sId == machine.sessionId) {
+          _onEvent.add(_EventCb<Event, E>((event) => cb(event as E)));
+        }
+      },
+      onExit: (void Function() cb) {
+        if (sId == machine.sessionId) {
+          _onExit.add(cb);
+        } else {
+          cb();
+        }
+      },
+      canTransition: (State s) {
+        if (sId != machine.sessionId) {
+          return false;
+        }
+        return machine.currentStatus.map(
+          notStarted: (notStarted) => false,
+          stopped: (stopped) => false,
+          running: (running) => machine.activeNode == this,
+        );
+      },
+    ));
   }
 
   void becomeInactive() {
-    _state?.dispose();
-    _state = null;
+    _onExit
+      ..forEach((exitCb) => exitCb())
+      ..clear();
+    _onEvent.clear();
   }
 
   bool isState(dynamic obj) => obj is S;
@@ -193,70 +230,30 @@ class _EventCb<Event, E extends Event> {
   bool isCandidate(Event obj) => obj is E;
 }
 
-class StateSelf<State, S extends State, Event> {
-  StateSelf(this._machine, this.previousStatus);
+@freezed
+class StateSelf<State, S extends State, Event>
+    with _$StateSelf<State, S, Event> {
+  factory StateSelf({
+    /// [StateMachineStatus] that was active before the current.
+    required final StateMachineStatus<State, Event> previousStatus,
 
-  final List<void Function()> _onExit = [];
-  final List<_EventCb<Event, Event>> _onEvent = [];
+    /// The state when entered
+    required S currentState,
 
-  /// [StateMachineStatus] that was active before the current.
-  final StateMachineStatus<State, Event> previousStatus;
+    /// Transition to another state. This can only be called once in the current state.
+    /// Subsequent calls are ignored.
+    required void Function(State state) transition,
 
-  MachineMixin<State, Event>? _machine;
+    /// Execute the callback given when leaving the state.
+    /// Calls are immediately executed after state has been left.
+    required void Function(void Function() cb) onExit,
 
-  void dispose() {
-    _machine = null;
-    _onEvent.clear();
-    _onExit
-      ..forEach((disposer) => disposer())
-      ..clear();
-  }
+    /// Attach an event to the current active state. This way one may communicate with the
+    /// StateMachine from outside.
+    /// Usually this is where a [transition] should happen.
+    required void Function<E extends Event>(void Function(E event) cb) onEvent,
 
-  _EventCb<Event, Event>? _candidate(Event event) {
-    return _onEvent.firstWhereOrNull((element) => element.isCandidate(event));
-  }
-
-  /// When leaving the current state, execute the callback.
-  /// This is especially useful for cleaning up async processes.
-  /// If the state is no longer active and this function is called, it will
-  /// automatically and immediately execute [cb]
-  void onExit(void Function() cb) {
-    if (null != _machine) {
-      _onExit.add(cb);
-    } else {
-      cb();
-    }
-  }
-
-  /// Register a new listener for specific event.
-  /// Listening for events is the way on how code can communicate
-  /// with the [StateMachine].
-  void onEvent<E extends Event>(void Function(E event) cb) {
-    assert(null != _machine,
-        'Trying to add event callback $E in $S which is no longer active');
-
-    _onEvent.add(_EventCb<Event, E>((event) => cb(event as E)));
-  }
-
-  /// Check whether the current state can still transition to another state.
-  /// This method is especially useful for async code that is execute in an
-  /// [MachineProviderRef.onState].
-  bool canTransition(State state) {
-    if (null == _machine) return false;
-    return _machine!.currentStatus.map(
-      notStarted: (notStarted) => false,
-      stopped: (stopped) => false,
-      running: (running) => _machine?.activeNode?._state == this,
-    );
-  }
-
-  /// Transition from the current state to another state.
-  /// This will leave the current state and will execute all [StateSelf.onExit] callbacks.
-  void transition(State state) {
-    // assert(null != _machine,
-    //     'Trying to transition to $state in $S which is no longer active');
-    if (null != _machine && this == _machine?.activeNode?._state) {
-      _machine!.transition(state);
-    }
-  }
+    /// Check if it is possible to transition.
+    required bool Function(State state) canTransition,
+  }) = _StateSelf<State, S, Event>;
 }

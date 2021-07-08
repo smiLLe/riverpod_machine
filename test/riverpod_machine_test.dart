@@ -268,39 +268,39 @@ void main() {
               .having((s) => s.state, 'state', equals(const State1.bar())));
     });
 
-    test('is no longer possible if state has been left before', () async {
-      final container = ProviderContainer();
-      final completer = Completer<dynamic>();
-      final provider = StateMachineProvider<State1, Event1>((ref) {
-        ref.onState<_S1Foo>((cfg) {
-          cfg.transition(const State1.bar());
-          Future(() {
-            try {
-              cfg.transition(const State1.baz());
-            } catch (e) {
-              completer.completeError(e);
-            }
-          });
-        });
-        ref.onState<_S1Bar>((cfg) {});
-        ref.onState<_S1Baz>((cfg) {});
-        return const State1.foo();
-      });
+    // test('is no longer possible if state has been left before', () async {
+    //   final container = ProviderContainer();
+    //   final completer = Completer<dynamic>();
+    //   final provider = StateMachineProvider<State1, Event1>((ref) {
+    //     ref.onState<_S1Foo>((cfg) {
+    //       cfg.transition(const State1.bar());
+    //       Future(() {
+    //         try {
+    //           cfg.transition(const State1.baz());
+    //         } catch (e) {
+    //           completer.completeError(e);
+    //         }
+    //       });
+    //     });
+    //     ref.onState<_S1Bar>((cfg) {});
+    //     ref.onState<_S1Baz>((cfg) {});
+    //     return const State1.foo();
+    //   });
 
-      container
-          .read(provider)
-          .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+    //   container
+    //       .read(provider)
+    //       .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
 
-      expectLater(completer.future, throwsA(isA<AssertionError>()));
+    //   expectLater(completer.future, throwsA(isA<AssertionError>()));
 
-      try {
-        await completer.future;
-      } catch (_) {}
-      expect(
-          container.read(provider),
-          isA<MachineRunning<State1, Event1>>()
-              .having((s) => s.state, 'state', equals(const State1.bar())));
-    });
+    //   try {
+    //     await completer.future;
+    //   } catch (_) {}
+    //   expect(
+    //       container.read(provider),
+    //       isA<MachineRunning<State1, Event1>>()
+    //           .having((s) => s.state, 'state', equals(const State1.bar())));
+    // });
 
     test('can be checked', () async {
       final container = ProviderContainer();
@@ -458,6 +458,66 @@ void main() {
             ..send(const Event1.next())
             ..send(const Event1.toBar()));
     });
+  });
+
+  test('start machine in different state', () {
+    final container = ProviderContainer();
+    final provider = StateMachineProvider<State1, Event1>((ref) {
+      ref.onState<_S1Foo>((cfg) {});
+      ref.onState<_S1Bar>((cfg) {});
+      ref.onState<_S1Baz>((cfg) {});
+      return const State1.foo();
+    });
+
+    container.read(provider).maybeMap(
+        orElse: () {},
+        notStarted: (obj) => obj.start(state: const State1.bar()));
+
+    expect(
+        container.read(provider),
+        isA<MachineRunning<State1, Event1>>()
+            .having((s) => s.state, 'state', equals(const State1.bar())));
+
+    container
+        .read(provider)
+        .maybeMap(orElse: () {}, running: (obj) => obj.stop());
+    container.read(provider).maybeMap(
+        orElse: () {}, stopped: (obj) => obj.start(state: const State1.baz()));
+    expect(
+        container.read(provider),
+        isA<MachineRunning<State1, Event1>>()
+            .having((s) => s.state, 'state', equals(const State1.baz())));
+  });
+
+  test('there is a .currentState', () {
+    final container = ProviderContainer();
+    late StateSelf<State1, State1, Event1> self;
+    final provider = StateMachineProvider<State1, Event1>((ref) {
+      ref.onState<_S1Foo>((cfg) {
+        self = cfg;
+        cfg.onEvent<_E1Next>((event) {
+          cfg.transition(const State1.bar());
+        });
+      });
+      ref.onState<_S1Bar>((cfg) {
+        self = cfg;
+        cfg.transition(const State1.baz());
+      });
+      ref.onState<_S1Baz>((cfg) {
+        self = cfg;
+      });
+      return const State1.foo();
+    });
+
+    container
+        .read(provider)
+        .maybeMap(orElse: () {}, notStarted: (obj) => obj.start());
+
+    expect(self.currentState, const State1.foo());
+
+    container.read(provider).maybeMap(
+        orElse: () {}, running: (obj) => obj.send(const Event1.next()));
+    expect(self.currentState, const State1.baz());
   });
 
   test('there is a .previousStatus', () {

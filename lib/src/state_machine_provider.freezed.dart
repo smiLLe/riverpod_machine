@@ -17,14 +17,15 @@ class _$StateMachineStatusTearOff {
   const _$StateMachineStatusTearOff();
 
   MachineNotStarted<State, Event> notStarted<State, Event>(
-      {required void Function() start}) {
+      {required void Function({State? state}) start}) {
     return MachineNotStarted<State, Event>(
       start: start,
     );
   }
 
   MachineStopped<State, Event> stopped<State, Event>(
-      {required State lastState, required void Function() start}) {
+      {required State lastState,
+      required void Function({State? state}) start}) {
     return MachineStopped<State, Event>(
       lastState: lastState,
       start: start,
@@ -52,8 +53,10 @@ const $StateMachineStatus = _$StateMachineStatusTearOff();
 mixin _$StateMachineStatus<State, Event> {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(void Function() start) notStarted,
-    required TResult Function(State lastState, void Function() start) stopped,
+    required TResult Function(void Function({State? state}) start) notStarted,
+    required TResult Function(
+            State lastState, void Function({State? state}) start)
+        stopped,
     required TResult Function(State state, void Function(Event) send,
             bool Function(Event) canSend, void Function() stop)
         running,
@@ -61,8 +64,9 @@ mixin _$StateMachineStatus<State, Event> {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(void Function() start)? notStarted,
-    TResult Function(State lastState, void Function() start)? stopped,
+    TResult Function(void Function({State? state}) start)? notStarted,
+    TResult Function(State lastState, void Function({State? state}) start)?
+        stopped,
     TResult Function(State state, void Function(Event) send,
             bool Function(Event) canSend, void Function() stop)?
         running,
@@ -108,7 +112,7 @@ abstract class $MachineNotStartedCopyWith<State, Event, $Res> {
   factory $MachineNotStartedCopyWith(MachineNotStarted<State, Event> value,
           $Res Function(MachineNotStarted<State, Event>) then) =
       _$MachineNotStartedCopyWithImpl<State, Event, $Res>;
-  $Res call({void Function() start});
+  $Res call({void Function({State? state}) start});
 }
 
 /// @nodoc
@@ -131,7 +135,7 @@ class _$MachineNotStartedCopyWithImpl<State, Event, $Res>
       start: start == freezed
           ? _value.start
           : start // ignore: cast_nullable_to_non_nullable
-              as void Function(),
+              as void Function({State? state}),
     ));
   }
 }
@@ -146,7 +150,7 @@ class _$MachineNotStarted<State, Event>
 
   /// Start the StateMachine. This will allow to send events.
   /// It will also enter the initial state.
-  final void Function() start;
+  final void Function({State? state}) start;
 
   @override
   String toString() {
@@ -174,8 +178,10 @@ class _$MachineNotStarted<State, Event>
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(void Function() start) notStarted,
-    required TResult Function(State lastState, void Function() start) stopped,
+    required TResult Function(void Function({State? state}) start) notStarted,
+    required TResult Function(
+            State lastState, void Function({State? state}) start)
+        stopped,
     required TResult Function(State state, void Function(Event) send,
             bool Function(Event) canSend, void Function() stop)
         running,
@@ -186,8 +192,9 @@ class _$MachineNotStarted<State, Event>
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(void Function() start)? notStarted,
-    TResult Function(State lastState, void Function() start)? stopped,
+    TResult Function(void Function({State? state}) start)? notStarted,
+    TResult Function(State lastState, void Function({State? state}) start)?
+        stopped,
     TResult Function(State state, void Function(Event) send,
             bool Function(Event) canSend, void Function() stop)?
         running,
@@ -226,12 +233,12 @@ class _$MachineNotStarted<State, Event>
 
 abstract class MachineNotStarted<State, Event>
     implements StateMachineStatus<State, Event> {
-  factory MachineNotStarted({required void Function() start}) =
+  factory MachineNotStarted({required void Function({State? state}) start}) =
       _$MachineNotStarted<State, Event>;
 
   /// Start the StateMachine. This will allow to send events.
   /// It will also enter the initial state.
-  void Function() get start => throw _privateConstructorUsedError;
+  void Function({State? state}) get start => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $MachineNotStartedCopyWith<State, Event, MachineNotStarted<State, Event>>
       get copyWith => throw _privateConstructorUsedError;
@@ -242,7 +249,7 @@ abstract class $MachineStoppedCopyWith<State, Event, $Res> {
   factory $MachineStoppedCopyWith(MachineStopped<State, Event> value,
           $Res Function(MachineStopped<State, Event>) then) =
       _$MachineStoppedCopyWithImpl<State, Event, $Res>;
-  $Res call({State lastState, void Function() start});
+  $Res call({State lastState, void Function({State? state}) start});
 }
 
 /// @nodoc
@@ -270,7 +277,7 @@ class _$MachineStoppedCopyWithImpl<State, Event, $Res>
       start: start == freezed
           ? _value.start
           : start // ignore: cast_nullable_to_non_nullable
-              as void Function(),
+              as void Function({State? state}),
     ));
   }
 }
@@ -288,7 +295,7 @@ class _$MachineStopped<State, Event> implements MachineStopped<State, Event> {
 
   /// Start the StateMachine. This will allow to send events.
   /// It will also enter the initial state.
-  final void Function() start;
+  final void Function({State? state}) start;
 
   @override
   String toString() {
@@ -321,8 +328,10 @@ class _$MachineStopped<State, Event> implements MachineStopped<State, Event> {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(void Function() start) notStarted,
-    required TResult Function(State lastState, void Function() start) stopped,
+    required TResult Function(void Function({State? state}) start) notStarted,
+    required TResult Function(
+            State lastState, void Function({State? state}) start)
+        stopped,
     required TResult Function(State state, void Function(Event) send,
             bool Function(Event) canSend, void Function() stop)
         running,
@@ -333,8 +342,9 @@ class _$MachineStopped<State, Event> implements MachineStopped<State, Event> {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(void Function() start)? notStarted,
-    TResult Function(State lastState, void Function() start)? stopped,
+    TResult Function(void Function({State? state}) start)? notStarted,
+    TResult Function(State lastState, void Function({State? state}) start)?
+        stopped,
     TResult Function(State state, void Function(Event) send,
             bool Function(Event) canSend, void Function() stop)?
         running,
@@ -374,15 +384,16 @@ class _$MachineStopped<State, Event> implements MachineStopped<State, Event> {
 abstract class MachineStopped<State, Event>
     implements StateMachineStatus<State, Event> {
   factory MachineStopped(
-      {required State lastState,
-      required void Function() start}) = _$MachineStopped<State, Event>;
+          {required State lastState,
+          required void Function({State? state}) start}) =
+      _$MachineStopped<State, Event>;
 
   /// the last State the StateMachine was in.
   State get lastState => throw _privateConstructorUsedError;
 
   /// Start the StateMachine. This will allow to send events.
   /// It will also enter the initial state.
-  void Function() get start => throw _privateConstructorUsedError;
+  void Function({State? state}) get start => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $MachineStoppedCopyWith<State, Event, MachineStopped<State, Event>>
       get copyWith => throw _privateConstructorUsedError;
@@ -505,8 +516,10 @@ class _$MachineRunning<State, Event> implements MachineRunning<State, Event> {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(void Function() start) notStarted,
-    required TResult Function(State lastState, void Function() start) stopped,
+    required TResult Function(void Function({State? state}) start) notStarted,
+    required TResult Function(
+            State lastState, void Function({State? state}) start)
+        stopped,
     required TResult Function(State state, void Function(Event) send,
             bool Function(Event) canSend, void Function() stop)
         running,
@@ -517,8 +530,9 @@ class _$MachineRunning<State, Event> implements MachineRunning<State, Event> {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(void Function() start)? notStarted,
-    TResult Function(State lastState, void Function() start)? stopped,
+    TResult Function(void Function({State? state}) start)? notStarted,
+    TResult Function(State lastState, void Function({State? state}) start)?
+        stopped,
     TResult Function(State state, void Function(Event) send,
             bool Function(Event) canSend, void Function() stop)?
         running,
@@ -579,5 +593,336 @@ abstract class MachineRunning<State, Event>
   void Function() get stop => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $MachineRunningCopyWith<State, Event, MachineRunning<State, Event>>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+class _$StateSelfTearOff {
+  const _$StateSelfTearOff();
+
+  _StateSelf<State, S, Event> call<State, S extends State, Event>(
+      {required StateMachineStatus<State, Event> previousStatus,
+      required S currentState,
+      required void Function(State) transition,
+      required void Function(void Function()) onExit,
+      required void Function<E extends Event>(void Function(E)) onEvent,
+      required bool Function(State) canTransition}) {
+    return _StateSelf<State, S, Event>(
+      previousStatus: previousStatus,
+      currentState: currentState,
+      transition: transition,
+      onExit: onExit,
+      onEvent: onEvent,
+      canTransition: canTransition,
+    );
+  }
+}
+
+/// @nodoc
+const $StateSelf = _$StateSelfTearOff();
+
+/// @nodoc
+mixin _$StateSelf<State, S extends State, Event> {
+  /// [StateMachineStatus] that was active before the current.
+  StateMachineStatus<State, Event> get previousStatus =>
+      throw _privateConstructorUsedError;
+
+  /// The state when entered
+  S get currentState => throw _privateConstructorUsedError;
+
+  /// Transition to another state. This can only be called once in the current state.
+  /// Subsequent calls are ignored.
+  void Function(State) get transition => throw _privateConstructorUsedError;
+
+  /// Execute the callback given when leaving the state.
+  /// Calls are immediately executed after state has been left.
+  void Function(void Function()) get onExit =>
+      throw _privateConstructorUsedError;
+
+  /// Attach an event to the current active state. This way one may communicate with the
+  /// StateMachine from outside.
+  /// Usually this is where a [transition] should happen.
+  void Function<E extends Event>(void Function(E)) get onEvent =>
+      throw _privateConstructorUsedError;
+
+  /// Check if it is possible to transition.
+  bool Function(State) get canTransition => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
+  $StateSelfCopyWith<State, S, Event, StateSelf<State, S, Event>>
+      get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $StateSelfCopyWith<State, S extends State, Event, $Res> {
+  factory $StateSelfCopyWith(StateSelf<State, S, Event> value,
+          $Res Function(StateSelf<State, S, Event>) then) =
+      _$StateSelfCopyWithImpl<State, S, Event, $Res>;
+  $Res call(
+      {StateMachineStatus<State, Event> previousStatus,
+      S currentState,
+      void Function(State) transition,
+      void Function(void Function()) onExit,
+      void Function<E extends Event>(void Function(E)) onEvent,
+      bool Function(State) canTransition});
+
+  $StateMachineStatusCopyWith<State, Event, $Res> get previousStatus;
+}
+
+/// @nodoc
+class _$StateSelfCopyWithImpl<State, S extends State, Event, $Res>
+    implements $StateSelfCopyWith<State, S, Event, $Res> {
+  _$StateSelfCopyWithImpl(this._value, this._then);
+
+  final StateSelf<State, S, Event> _value;
+  // ignore: unused_field
+  final $Res Function(StateSelf<State, S, Event>) _then;
+
+  @override
+  $Res call({
+    Object? previousStatus = freezed,
+    Object? currentState = freezed,
+    Object? transition = freezed,
+    Object? onExit = freezed,
+    Object? onEvent = freezed,
+    Object? canTransition = freezed,
+  }) {
+    return _then(_value.copyWith(
+      previousStatus: previousStatus == freezed
+          ? _value.previousStatus
+          : previousStatus // ignore: cast_nullable_to_non_nullable
+              as StateMachineStatus<State, Event>,
+      currentState: currentState == freezed
+          ? _value.currentState
+          : currentState // ignore: cast_nullable_to_non_nullable
+              as S,
+      transition: transition == freezed
+          ? _value.transition
+          : transition // ignore: cast_nullable_to_non_nullable
+              as void Function(State),
+      onExit: onExit == freezed
+          ? _value.onExit
+          : onExit // ignore: cast_nullable_to_non_nullable
+              as void Function(void Function()),
+      onEvent: onEvent == freezed
+          ? _value.onEvent
+          : onEvent // ignore: cast_nullable_to_non_nullable
+              as void Function<E extends Event>(void Function(E)),
+      canTransition: canTransition == freezed
+          ? _value.canTransition
+          : canTransition // ignore: cast_nullable_to_non_nullable
+              as bool Function(State),
+    ));
+  }
+
+  @override
+  $StateMachineStatusCopyWith<State, Event, $Res> get previousStatus {
+    return $StateMachineStatusCopyWith<State, Event, $Res>(
+        _value.previousStatus, (value) {
+      return _then(_value.copyWith(previousStatus: value));
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$StateSelfCopyWith<State, S extends State, Event, $Res>
+    implements $StateSelfCopyWith<State, S, Event, $Res> {
+  factory _$StateSelfCopyWith(_StateSelf<State, S, Event> value,
+          $Res Function(_StateSelf<State, S, Event>) then) =
+      __$StateSelfCopyWithImpl<State, S, Event, $Res>;
+  @override
+  $Res call(
+      {StateMachineStatus<State, Event> previousStatus,
+      S currentState,
+      void Function(State) transition,
+      void Function(void Function()) onExit,
+      void Function<E extends Event>(void Function(E)) onEvent,
+      bool Function(State) canTransition});
+
+  @override
+  $StateMachineStatusCopyWith<State, Event, $Res> get previousStatus;
+}
+
+/// @nodoc
+class __$StateSelfCopyWithImpl<State, S extends State, Event, $Res>
+    extends _$StateSelfCopyWithImpl<State, S, Event, $Res>
+    implements _$StateSelfCopyWith<State, S, Event, $Res> {
+  __$StateSelfCopyWithImpl(_StateSelf<State, S, Event> _value,
+      $Res Function(_StateSelf<State, S, Event>) _then)
+      : super(_value, (v) => _then(v as _StateSelf<State, S, Event>));
+
+  @override
+  _StateSelf<State, S, Event> get _value =>
+      super._value as _StateSelf<State, S, Event>;
+
+  @override
+  $Res call({
+    Object? previousStatus = freezed,
+    Object? currentState = freezed,
+    Object? transition = freezed,
+    Object? onExit = freezed,
+    Object? onEvent = freezed,
+    Object? canTransition = freezed,
+  }) {
+    return _then(_StateSelf<State, S, Event>(
+      previousStatus: previousStatus == freezed
+          ? _value.previousStatus
+          : previousStatus // ignore: cast_nullable_to_non_nullable
+              as StateMachineStatus<State, Event>,
+      currentState: currentState == freezed
+          ? _value.currentState
+          : currentState // ignore: cast_nullable_to_non_nullable
+              as S,
+      transition: transition == freezed
+          ? _value.transition
+          : transition // ignore: cast_nullable_to_non_nullable
+              as void Function(State),
+      onExit: onExit == freezed
+          ? _value.onExit
+          : onExit // ignore: cast_nullable_to_non_nullable
+              as void Function(void Function()),
+      onEvent: onEvent == freezed
+          ? _value.onEvent
+          : onEvent // ignore: cast_nullable_to_non_nullable
+              as void Function<E extends Event>(void Function(E)),
+      canTransition: canTransition == freezed
+          ? _value.canTransition
+          : canTransition // ignore: cast_nullable_to_non_nullable
+              as bool Function(State),
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$_StateSelf<State, S extends State, Event>
+    implements _StateSelf<State, S, Event> {
+  _$_StateSelf(
+      {required this.previousStatus,
+      required this.currentState,
+      required this.transition,
+      required this.onExit,
+      required this.onEvent,
+      required this.canTransition});
+
+  @override
+
+  /// [StateMachineStatus] that was active before the current.
+  final StateMachineStatus<State, Event> previousStatus;
+  @override
+
+  /// The state when entered
+  final S currentState;
+  @override
+
+  /// Transition to another state. This can only be called once in the current state.
+  /// Subsequent calls are ignored.
+  final void Function(State) transition;
+  @override
+
+  /// Execute the callback given when leaving the state.
+  /// Calls are immediately executed after state has been left.
+  final void Function(void Function()) onExit;
+  @override
+
+  /// Attach an event to the current active state. This way one may communicate with the
+  /// StateMachine from outside.
+  /// Usually this is where a [transition] should happen.
+  final void Function<E extends Event>(void Function(E)) onEvent;
+  @override
+
+  /// Check if it is possible to transition.
+  final bool Function(State) canTransition;
+
+  @override
+  String toString() {
+    return 'StateSelf<$State, $S, $Event>(previousStatus: $previousStatus, currentState: $currentState, transition: $transition, onExit: $onExit, onEvent: $onEvent, canTransition: $canTransition)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other is _StateSelf<State, S, Event> &&
+            (identical(other.previousStatus, previousStatus) ||
+                const DeepCollectionEquality()
+                    .equals(other.previousStatus, previousStatus)) &&
+            (identical(other.currentState, currentState) ||
+                const DeepCollectionEquality()
+                    .equals(other.currentState, currentState)) &&
+            (identical(other.transition, transition) ||
+                const DeepCollectionEquality()
+                    .equals(other.transition, transition)) &&
+            (identical(other.onExit, onExit) ||
+                const DeepCollectionEquality().equals(other.onExit, onExit)) &&
+            (identical(other.onEvent, onEvent) ||
+                const DeepCollectionEquality()
+                    .equals(other.onEvent, onEvent)) &&
+            (identical(other.canTransition, canTransition) ||
+                const DeepCollectionEquality()
+                    .equals(other.canTransition, canTransition)));
+  }
+
+  @override
+  int get hashCode =>
+      runtimeType.hashCode ^
+      const DeepCollectionEquality().hash(previousStatus) ^
+      const DeepCollectionEquality().hash(currentState) ^
+      const DeepCollectionEquality().hash(transition) ^
+      const DeepCollectionEquality().hash(onExit) ^
+      const DeepCollectionEquality().hash(onEvent) ^
+      const DeepCollectionEquality().hash(canTransition);
+
+  @JsonKey(ignore: true)
+  @override
+  _$StateSelfCopyWith<State, S, Event, _StateSelf<State, S, Event>>
+      get copyWith => __$StateSelfCopyWithImpl<State, S, Event,
+          _StateSelf<State, S, Event>>(this, _$identity);
+}
+
+abstract class _StateSelf<State, S extends State, Event>
+    implements StateSelf<State, S, Event> {
+  factory _StateSelf(
+          {required StateMachineStatus<State, Event> previousStatus,
+          required S currentState,
+          required void Function(State) transition,
+          required void Function(void Function()) onExit,
+          required void Function<E extends Event>(void Function(E)) onEvent,
+          required bool Function(State) canTransition}) =
+      _$_StateSelf<State, S, Event>;
+
+  @override
+
+  /// [StateMachineStatus] that was active before the current.
+  StateMachineStatus<State, Event> get previousStatus =>
+      throw _privateConstructorUsedError;
+  @override
+
+  /// The state when entered
+  S get currentState => throw _privateConstructorUsedError;
+  @override
+
+  /// Transition to another state. This can only be called once in the current state.
+  /// Subsequent calls are ignored.
+  void Function(State) get transition => throw _privateConstructorUsedError;
+  @override
+
+  /// Execute the callback given when leaving the state.
+  /// Calls are immediately executed after state has been left.
+  void Function(void Function()) get onExit =>
+      throw _privateConstructorUsedError;
+  @override
+
+  /// Attach an event to the current active state. This way one may communicate with the
+  /// StateMachine from outside.
+  /// Usually this is where a [transition] should happen.
+  void Function<E extends Event>(void Function(E)) get onEvent =>
+      throw _privateConstructorUsedError;
+  @override
+
+  /// Check if it is possible to transition.
+  bool Function(State) get canTransition => throw _privateConstructorUsedError;
+  @override
+  @JsonKey(ignore: true)
+  _$StateSelfCopyWith<State, S, Event, _StateSelf<State, S, Event>>
       get copyWith => throw _privateConstructorUsedError;
 }
