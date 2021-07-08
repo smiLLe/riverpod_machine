@@ -3,12 +3,11 @@ part of '../state_machine_provider.dart';
 class StateMachineProviderFamilyBuilder {
   const StateMachineProviderFamilyBuilder();
 
-  /// {@macro riverpod.family}
   StateMachineProviderFamily<State, Event, Arg> call<State, Event, Arg>(
     FamilyCreate<State, MachineProviderRef<State, Event>, Arg> create, {
     String? name,
   }) {
-    return StateMachineProviderFamily(create, name: name);
+    return StateMachineProviderFamily<State, Event, Arg>(create, name: name);
   }
 }
 
@@ -19,7 +18,7 @@ class AutoDisposeStateMachineProviderBuilder {
     Create<State, AutoDisposeMachineProviderRef<State, Event>> create, {
     String? name,
   }) {
-    return AutoDisposeStateMachineProvider(create, name: name);
+    return AutoDisposeStateMachineProvider<State, Event>(create, name: name);
   }
 }
 
@@ -32,6 +31,7 @@ class AutoDisposeStateMachineProviderFamilyBuilder {
         create, {
     String? name,
   }) {
-    return AutoDisposeStateMachineProviderFamily(create, name: name);
+    return AutoDisposeStateMachineProviderFamily<State, Event, Arg>(create,
+        name: name);
   }
 }

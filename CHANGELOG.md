@@ -1,3 +1,7 @@
+## 0.0.1-dev.4
+
+* Updated Builder Generics
+
 ## 0.0.1-dev.3
 
 * It is now possible to start a machine on a different state
