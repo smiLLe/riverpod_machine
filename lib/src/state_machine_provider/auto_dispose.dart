@@ -56,17 +56,12 @@ class AutoDisposeStateMachineProvider<State, Event>
   }
 
   @override
-  void Function(
-    void Function({
-      required ProviderBase origin,
-      required ProviderBase override,
-    })
-        setup,
-  ) get setupOverride => (setup) {
-        setup(origin: this, override: this);
-        // setup(origin: future, override: future);
-        // setup(origin: Object(), override: Object());
-      };
+  void setupOverride(
+      void Function(
+              {required ProviderBase origin, required ProviderBase override})
+          setup) {
+    setup(origin: this, override: this);
+  }
 }
 
 class AutoDisposeStateMachineProviderFamily<State, Event, Arg> extends Family<
