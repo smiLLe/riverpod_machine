@@ -1,0 +1,3 @@
+name: riverpod_machine
+packages:
+  - packages/**
