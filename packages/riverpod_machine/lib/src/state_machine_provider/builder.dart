@@ -1,4 +1,6 @@
-part of '../state_machine_provider.dart';
+import 'package:riverpod/riverpod.dart';
+import 'base.dart';
+import 'auto_dispose.dart';
 
 class StateMachineProviderFamilyBuilder {
   const StateMachineProviderFamilyBuilder();

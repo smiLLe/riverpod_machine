@@ -1,62 +1,60 @@
-part of '../state_machine_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod/riverpod.dart';
+import '../state_machine_provider.dart';
 
-abstract class AutoDisposeMachineProviderRef<State, Event>
+abstract class AutoDisposeMachineProviderRef<StateValue, Event>
     implements AutoDisposeProviderRefBase {
   /// Adding a state to the [StateMachine].
   /// The given callback will always execute when the state is entered.
   ///
   /// This method must only be called while the provider is being created.
-  void onState<S extends State>(OnEnterState<State, S, Event> cb);
+  void onState<S extends StateValue>(OnEnterState<StateValue, S, Event> cb);
 }
 
-class AutoDisposeMachineProviderElement<State, Event>
-    extends AutoDisposeProviderElementBase<StateMachineStatus<State, Event>>
-    with MachineMixin<State, Event>
-    implements AutoDisposeMachineProviderRef<State, Event> {
+class AutoDisposeMachineProviderElement<StateValue, Event>
+    extends AutoDisposeProviderElementBase<StateMachine<StateValue, Event>>
+    with StateMachineImpl<StateValue, Event>
+    implements AutoDisposeMachineProviderRef<StateValue, Event> {
   AutoDisposeMachineProviderElement(
-      ProviderBase<StateMachineStatus<State, Event>> provider)
+      ProviderBase<StateMachine<StateValue, Event>> provider)
       : super(provider);
 
   @override
   String get type => provider.toString();
 
   @override
-  void onState<S extends State>(OnEnterState<State, S, Event> cb) {
-    states.add(StateNode<State, S, Event>(cb));
+  void onState<S extends StateValue>(OnEnterState<StateValue, S, Event> cb) {
+    states.add(StateNode<StateValue, S, Event>(cb));
   }
 }
 
 // ignore: subtype_of_sealed_class
-class AutoDisposeStateMachineProvider<State, Event>
-    extends AutoDisposeProviderBase<StateMachineStatus<State, Event>> {
+class AutoDisposeStateMachineProvider<StateValue, Event>
+    extends AutoDisposeProviderBase<StateMachine<StateValue, Event>> {
   AutoDisposeStateMachineProvider(this._create, {String? name}) : super(name);
 
-  final Create<State, AutoDisposeMachineProviderRef<State, Event>> _create;
+  final Create<StateValue, AutoDisposeMachineProviderRef<StateValue, Event>>
+      _create;
 
   @override
-  StateMachineStatus<State, Event> create(
-      AutoDisposeMachineProviderRef<State, Event> ref) {
-    final ele = ref as AutoDisposeMachineProviderElement<State, Event>;
-    if (!ele.initialized) {
-      ele.initialized = true;
-      ele.initialState = _create(ref);
-      ele.currentStatus = ele.initialStatus;
-
-      return ele.initialStatus;
-    }
+  StateMachine<StateValue, Event> create(
+      AutoDisposeMachineProviderRef<StateValue, Event> ref) {
+    final ele = ref as AutoDisposeMachineProviderElement<StateValue, Event>;
+    ele.reset();
+    ele.enter(_create(ref));
     return ele.state;
   }
 
   @override
-  AutoDisposeProviderElementBase<StateMachineStatus<State, Event>>
+  AutoDisposeProviderElementBase<StateMachine<StateValue, Event>>
       createElement() {
-    return AutoDisposeMachineProviderElement<State, Event>(this);
+    return AutoDisposeMachineProviderElement<StateValue, Event>(this);
   }
 
   @override
   bool recreateShouldNotify(
-    StateMachineStatus<State, Event> previousState,
-    StateMachineStatus<State, Event> newState,
+    StateMachine<StateValue, Event> previousState,
+    StateMachine<StateValue, Event> newState,
   ) {
     return true;
   }
@@ -70,19 +68,18 @@ class AutoDisposeStateMachineProvider<State, Event>
   }
 }
 
-class AutoDisposeStateMachineProviderFamily<State, Event, Arg> extends Family<
-    StateMachineStatus<State, Event>,
-    Arg,
-    AutoDisposeStateMachineProvider<State, Event>> {
+class AutoDisposeStateMachineProviderFamily<StateValue, Event, Arg>
+    extends Family<StateMachine<StateValue, Event>, Arg,
+        AutoDisposeStateMachineProvider<StateValue, Event>> {
   AutoDisposeStateMachineProviderFamily(this._create, {String? name})
       : super(name);
 
-  final FamilyCreate<State, AutoDisposeMachineProviderRef<State, Event>, Arg>
-      _create;
+  final FamilyCreate<StateValue,
+      AutoDisposeMachineProviderRef<StateValue, Event>, Arg> _create;
 
   @override
-  AutoDisposeStateMachineProvider<State, Event> create(Arg argument) {
-    return AutoDisposeStateMachineProvider<State, Event>(
+  AutoDisposeStateMachineProvider<StateValue, Event> create(Arg argument) {
+    return AutoDisposeStateMachineProvider<StateValue, Event>(
       (ref) => _create(ref, argument),
       name: name,
     );

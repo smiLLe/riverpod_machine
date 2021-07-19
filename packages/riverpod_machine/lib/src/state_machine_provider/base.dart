@@ -1,34 +1,37 @@
-part of '../state_machine_provider.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:riverpod/riverpod.dart';
+import '../state_machine_provider.dart';
+import 'builder.dart';
 
-abstract class MachineProviderRef<State, Event> implements ProviderRefBase {
+abstract class MachineProviderRef<StateValue, Event>
+    implements ProviderRefBase {
   /// Adding a state to the [StateMachine].
   /// The given callback will always execute when the state is entered.
   ///
   /// This method must only be called while the provider is being created.
-  void onState<S extends State>(OnEnterState<State, S, Event> cb);
+  void onState<S extends StateValue>(OnEnterState<StateValue, S, Event> cb);
 }
 
-class MachineProviderElement<State, Event>
-    extends ProviderElementBase<StateMachineStatus<State, Event>>
-    with MachineMixin<State, Event>
-    implements MachineProviderRef<State, Event> {
-  MachineProviderElement(
-      ProviderBase<StateMachineStatus<State, Event>> provider)
+class MachineProviderElement<StateValue, Event>
+    extends ProviderElementBase<StateMachine<StateValue, Event>>
+    with StateMachineImpl<StateValue, Event>
+    implements MachineProviderRef<StateValue, Event> {
+  MachineProviderElement(ProviderBase<StateMachine<StateValue, Event>> provider)
       : super(provider);
 
   @override
   String get type => provider.toString();
 
   @override
-  void onState<S extends State>(OnEnterState<State, S, Event> cb) {
-    states.add(StateNode<State, S, Event>(cb));
+  void onState<S extends StateValue>(OnEnterState<StateValue, S, Event> cb) {
+    states.add(StateNode<StateValue, S, Event>(cb));
   }
 }
 
 // ignore: subtype_of_sealed_class
 @sealed
-class StateMachineProvider<State, Event>
-    extends AlwaysAliveProviderBase<StateMachineStatus<State, Event>> {
+class StateMachineProvider<StateValue, Event>
+    extends AlwaysAliveProviderBase<StateMachine<StateValue, Event>> {
   StateMachineProvider(this._create, {String? name}) : super(name);
 
   static const family = StateMachineProviderFamilyBuilder();
@@ -36,30 +39,25 @@ class StateMachineProvider<State, Event>
   static const autoDisposeFamily =
       AutoDisposeStateMachineProviderFamilyBuilder();
 
-  final Create<State, MachineProviderRef<State, Event>> _create;
+  final Create<StateValue, MachineProviderRef<StateValue, Event>> _create;
 
   @override
-  StateMachineStatus<State, Event> create(
-      MachineProviderRef<State, Event> ref) {
-    final ele = ref as MachineProviderElement<State, Event>;
-    if (!ele.initialized) {
-      ele.initialized = true;
-      ele.initialState = _create(ref);
-      ele.currentStatus = ele.initialStatus;
-
-      return ele.initialStatus;
-    }
+  StateMachine<StateValue, Event> create(
+      MachineProviderRef<StateValue, Event> ref) {
+    final ele = ref as MachineProviderElement<StateValue, Event>;
+    ele.reset();
+    ele.enter(_create(ref));
     return ele.state;
   }
 
   @override
-  MachineProviderElement<State, Event> createElement() =>
+  MachineProviderElement<StateValue, Event> createElement() =>
       MachineProviderElement(this);
 
   @override
   bool recreateShouldNotify(
-    StateMachineStatus<State, Event> previousState,
-    StateMachineStatus<State, Event> newState,
+    StateMachine<StateValue, Event> previousState,
+    StateMachine<StateValue, Event> newState,
   ) {
     return true;
   }
@@ -73,15 +71,18 @@ class StateMachineProvider<State, Event>
   }
 }
 
-class StateMachineProviderFamily<State, Event, Arg> extends Family<
-    StateMachineStatus<State, Event>, Arg, StateMachineProvider<State, Event>> {
+class StateMachineProviderFamily<StateValue, Event, Arg> extends Family<
+    StateMachine<StateValue, Event>,
+    Arg,
+    StateMachineProvider<StateValue, Event>> {
   StateMachineProviderFamily(this._create, {String? name}) : super(name);
 
-  final FamilyCreate<State, MachineProviderRef<State, Event>, Arg> _create;
+  final FamilyCreate<StateValue, MachineProviderRef<StateValue, Event>, Arg>
+      _create;
 
   @override
-  StateMachineProvider<State, Event> create(Arg argument) {
-    return StateMachineProvider<State, Event>(
+  StateMachineProvider<StateValue, Event> create(Arg argument) {
+    return StateMachineProvider<StateValue, Event>(
       (ref) => _create(ref, argument),
       name: name,
     );
