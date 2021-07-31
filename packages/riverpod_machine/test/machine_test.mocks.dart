@@ -3,7 +3,7 @@
 // Do not manually edit this file.
 
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:riverpod_machine/src/state_machine_provider.dart' as _i3;
+import 'package:riverpod_machine/src/machine.dart' as _i3;
 
 import 'machine_test.dart' as _i2;
 
